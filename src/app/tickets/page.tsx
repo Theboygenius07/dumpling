@@ -1,35 +1,43 @@
 "use client";
+import Link from "next/link";
 import { useState } from "react";
+import { Check, Copy, Sparkles, Ticket as TicketIcon } from "lucide-react";
 import type { Ticket } from "@/lib/types";
-import { Avatar, Loading, SEV_TONE, ago, fbOf, stepOf, testerOf, useStore, useToast, type State } from "../ui";
+import { Avatar, Dots, Empty, Priority, SEV, Status, ago, fbOf, stepOf, testerOf, useStore, type State } from "../ui";
 
 export default function TicketsPage() {
-  const { s, empty } = useStore();
+  const { s } = useStore();
   const [sel, setSel] = useState<string | null>(null);
-  if (!s) return <Loading empty={empty} />;
+  if (!s) return <div className="page empty"><Dots /></div>;
   const tickets = [...s.tickets].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const t = tickets.find((x) => x.id === sel) ?? tickets[0];
   return (
     <div className="page">
-      <div style={{ marginBottom: 18 }}>
-        <div className="eyebrow">For the developer</div>
-        <h1 style={{ marginTop: 4 }}>Tickets</h1>
-        <p className="lede">Every ticket here was approved by a person, one at a time. Each one carries every tester who saw it, on what setup, in their own words.</p>
+      <div className="head">
+        <div>
+          <h1>Tickets</h1>
+          <p>Each one approved by a person, one at a time — with every tester who saw it, their setup and their exact words.</p>
+        </div>
       </div>
       {!tickets.length ? (
-        <div className="card empty">No tickets yet — they appear here when a manager approves one in Review.</div>
+        <div className="panel"><Empty icon={<TicketIcon size={20} />} title="No tickets yet">Tickets appear here when the UAT manager approves one. <Link href="/review" className="link">Go to Review</Link></Empty></div>
       ) : (
-        <div className="split">
-          <aside className="list sticky">
+        <>
+          <div className="list">
+            <div className="lhead"><Status kind="todo" />Open<span className="muted" style={{ fontWeight: 400 }}>{tickets.length}</span></div>
             {tickets.map((x) => (
-              <button key={x.id} className={`item ${t?.id === x.id ? "on" : ""}`} onClick={() => setSel(x.id)}>
-                <div className="row wrap"><span className="chip ink">{x.id}</span><span className={`chip ${SEV_TONE[x.severity]}`}>{x.severity}</span><span className="chip line">{x.witnessIds.length} {x.witnessIds.length === 1 ? "witness" : "witnesses"}</span></div>
-                <div className="t">{x.title}</div>
+              <button key={x.id} className={`lrow ${t?.id === x.id ? "on" : ""}`} onClick={() => setSel(x.id)}>
+                <Priority sev={x.severity} />
+                <span className="small muted" style={{ fontWeight: 500 }}>{x.id}</span>
+                <Status kind="todo" />
+                <span className="clip" style={{ fontWeight: 500 }}>{x.title}</span>
+                <span className="avatars">{x.witnessIds.slice(0, 6).map((id) => <Avatar key={id} t={testerOf(s, fbOf(s, id)?.testerId ?? "")} size="sm" />)}</span>
+                <span className="small muted" style={{ textAlign: "right" }}>{ago(x.createdAt)}</span>
               </button>
             ))}
-          </aside>
-          {t && <TicketView s={s} t={t} />}
-        </div>
+          </div>
+          {t && <Issue key={t.id} s={s} t={t} />}
+        </>
       )}
     </div>
   );
@@ -47,7 +55,7 @@ function markdown(s: State, t: Ticket) {
     `**Expected:** ${t.expected}`,
     `**Actual:** ${t.actual}`,
     "",
-    "### Seen by",
+    `### Seen by ${w.length} ${w.length === 1 ? "tester" : "testers"}`,
     "| Tester | Browser | OS | Device | Their words |",
     "|---|---|---|---|---|",
     ...w.map((f) => {
@@ -61,54 +69,72 @@ function markdown(s: State, t: Ticket) {
   ].join("\n");
 }
 
-function TicketView({ s, t }: { s: State; t: Ticket }) {
-  const { toast, Toast } = useToast();
+function Issue({ s, t }: { s: State; t: Ticket }) {
+  const { toast } = useStore();
+  const [copied, setCopied] = useState(false);
   const w = t.witnessIds.map((id) => fbOf(s, id)!).filter(Boolean);
-  const browsers = [...new Set(w.map((f) => testerOf(s, f.testerId)?.env.browser.split(" ")[0]))];
+  const browsers = [...new Set(w.map((f) => testerOf(s, f.testerId)?.env.browser))];
+  const step = w[0] ? stepOf(s, w[0]) : null;
+  const manager = t.approvedBy.split(" (")[0]!;
   return (
-    <section className="stack">
-      <div className="card stack">
-        <div className="row wrap" style={{ justifyContent: "space-between" }}>
-          <div className="row wrap"><span className="chip ink">{t.id}</span><span className={`chip ${SEV_TONE[t.severity]}`}>{t.severity}</span><span className="chip good">{t.status}</span></div>
-          <button className="btn sm" onClick={async () => { await navigator.clipboard.writeText(markdown(s, t)); toast("Copied — paste into GitHub or Jira."); }}>Copy for GitHub / Jira</button>
+    <div className="issue" style={{ animation: "fade 180ms" }}>
+      <section className="issue-body stack-16">
+        <div className="row between">
+          <span className="small muted" style={{ fontWeight: 500 }}>{t.id}</span>
+          <button className="btn sm" onClick={async () => { await navigator.clipboard.writeText(markdown(s, t)); setCopied(true); toast("Copied — paste into GitHub or Jira."); setTimeout(() => setCopied(false), 2000); }}>
+            {copied ? <Check size={13} /> : <Copy size={13} />}Copy for GitHub / Jira
+          </button>
         </div>
-        <h1 style={{ fontSize: 26 }}>{t.title}</h1>
-        <p className="small muted">
-          Drafted by {t.draftedBy === "model" ? "Heard" : "rules"} · approved by {t.approvedBy} {ago(t.createdAt)}
-          {t.edited.length ? ` · the manager changed: ${t.edited.join(", ")}` : " · approved as drafted"}
-        </p>
-        <p className="small"><b>Why {t.severity}:</b> {t.severityWhy}</p>
-      </div>
-      <div className="grid-2">
-        <div className="card">
-          <h3>Steps to reproduce</h3>
-          <ol style={{ margin: "8px 0 0", paddingLeft: 20 }}>{t.steps.map((x, i) => <li key={i} style={{ marginTop: 4 }}>{x}</li>)}</ol>
+        <h1>{t.title}</h1>
+        <div>
+          <h3 style={{ marginBottom: 10 }}>Steps to reproduce</h3>
+          <ol className="ol">{t.steps.map((x, i) => <li key={i}>{x}</li>)}</ol>
         </div>
-        <div className="card stack-sm">
-          <div><div className="small muted">Expected</div><p>{t.expected}</p></div>
-          <div><div className="small muted">What happened</div><p>{t.actual}</p></div>
-          {t.notes && <div><div className="small muted">Notes</div><p>{t.notes}</p></div>}
+        <div className="ea">
+          <div><div className="label" style={{ color: "var(--good)" }}>Expected</div><p style={{ marginTop: 3 }}>{t.expected}</p></div>
+          <div><div className="label" style={{ color: "var(--bug)" }}>What happened</div><p style={{ marginTop: 3 }}>{t.actual}</p></div>
         </div>
-      </div>
-      <div className="card">
-        <div className="panel-title"><h3>Seen by {w.length} {w.length === 1 ? "tester" : "testers"}</h3><span className="small muted">{browsers.join(" · ")}</span></div>
-        <div className="stack">
-          {w.map((f) => {
-            const p = testerOf(s, f.testerId);
-            return (
-              <div key={f.id} className="row" style={{ alignItems: "flex-start" }}>
-                <Avatar t={p} />
-                <div className="grow">
-                  <div className="small"><b>{p?.name}</b> <span className="muted">· {p?.env.browser} · {p?.env.os} · {p?.env.device} · {stepOf(s, f).label}</span></div>
-                  <div className="quote" style={{ marginTop: 4 }}>{f.text}</div>
-                  {f.messages.filter((m) => m.from === "tester").map((m) => <p key={m.id} className="small" style={{ marginTop: 4 }}><span className="muted">Follow-up:</span> {m.text}</p>)}
+        {t.notes && <div><h3 style={{ marginBottom: 6 }}>Notes</h3><p style={{ color: "var(--text-2)" }}>{t.notes}</p></div>}
+        <div className="hr" />
+        <div>
+          <h3 style={{ marginBottom: 14 }}>Activity</h3>
+          <div className="activity">
+            {w.map((f) => {
+              const p = testerOf(s, f.testerId);
+              return (
+                <div key={f.id} className="act-row">
+                  <Avatar t={p} />
+                  <div>
+                    <div className="small"><b style={{ fontWeight: 500 }}>{p?.name}</b> <span className="muted">reported it · {p?.env.browser} · {p?.env.os} · {p?.env.device} · {ago(f.at)}</span></div>
+                    <div className="quote" style={{ marginTop: 6 }}>{f.text}</div>
+                    {f.messages.filter((m) => m.from === "tester").map((m) => <p key={m.id} className="small" style={{ marginTop: 6 }}><span className="muted">Follow-up:</span> {m.text}</p>)}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+            <div className="act-row">
+              <span className="hmark" style={{ width: 26, height: 26, borderRadius: "50%" }}><Sparkles size={13} /></span>
+              <div className="small" style={{ paddingTop: 4 }}><b style={{ fontWeight: 500 }}>Heard</b> <span className="muted">drafted this ticket from {w.length} {w.length === 1 ? "report" : "reports"}</span></div>
+            </div>
+            <div className="act-row">
+              <Avatar t={{ name: manager }} />
+              <div className="small" style={{ paddingTop: 4 }}><b style={{ fontWeight: 500 }}>{manager}</b> <span className="muted">approved it{t.edited.length ? ` and changed the ${t.edited.join(", ")}` : " as drafted"} · {ago(t.createdAt)}</span></div>
+            </div>
+          </div>
         </div>
-      </div>
-      <Toast />
-    </section>
+      </section>
+      <aside className="issue-side">
+        <div className="prop"><span>Status</span><span className="row"><Status kind="todo" />Open</span></div>
+        <div className="prop"><span>Priority</span><span className="row"><Priority sev={t.severity} />{SEV[t.severity].label}</span></div>
+        <div className="prop" style={{ alignItems: "start" }}><span>Why</span><span className="small" style={{ color: "var(--text-2)" }}>{t.severityWhy}</span></div>
+        <div className="hr" style={{ margin: "8px 0" }} />
+        <div className="prop"><span>Reported by</span><span className="row"><span className="avatars">{w.slice(0, 5).map((f) => <Avatar key={f.id} t={testerOf(s, f.testerId)} size="sm" />)}</span>{w.length}</span></div>
+        <div className="prop" style={{ alignItems: "start" }}><span>Seen on</span><span className="row wrap" style={{ gap: 4 }}>{browsers.map((b) => <span key={b} className="pill">{b}</span>)}</span></div>
+        {step?.script && <div className="prop" style={{ alignItems: "start" }}><span>Found in</span><span className="small">{step.label}</span></div>}
+        <div className="hr" style={{ margin: "8px 0" }} />
+        <div className="prop"><span>Approved by</span><span className="row"><Avatar t={{ name: manager }} size="sm" />{manager}</span></div>
+        <div className="prop"><span>Drafted by</span><span className="row"><Sparkles size={13} color="var(--accent)" />Heard</span></div>
+      </aside>
+    </div>
   );
 }

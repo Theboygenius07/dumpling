@@ -16,6 +16,19 @@ The test cycle in this prototype is a real one: the beta of **chalk** (trychalk.
 | **Back** | Tester | "My notes" shows where every note went: became ticket CH-101 (with the detail they added credited), filed in the ideas backlog (with how many others asked), answered, or a question waiting for them. |
 | **Across the cycle** | Everyone | Where the cycle hurts (failures per script step), how many notes folded into how many problems, whether every tester got a reply from a person, and **how often the manager agreed with Heard**. Every overrule is kept. |
 
+## Connect your app
+
+Feedback doesn't only come from scripted testing. **Connect your app** brings in notes from real use, and they go through the same pipeline and the same one-at-a-time review:
+
+- **Widget:** one script tag adds a Feedback button to any web app. People write in their own words; the page, their browser and the last few JavaScript errors are attached automatically.
+  ```html
+  <script src="http://localhost:4100/widget.js" data-key="hrd_chalk_demo_4f9a2c" data-app="chalk" async></script>
+  ```
+- **API:** `POST /api/intake` with `Authorization: Bearer <key>` and `{ text, kind, name, page }`. Use it for app-store reviews, support tickets, or anything else you already collect.
+- **chalk's Report a problem:** imported from chalk's own log (`CHALK_REPORTS`).
+
+The demo key is fixed (`HEARD_KEY` overrides it) so that a reset doesn't break a widget already pasted into an app.
+
 ## Human control is enforced in code, not just the UI
 
 - **No batch approve.** `/api/decide` takes exactly one action on one target. If you send it a list, it refuses ("One decision at a time.").
@@ -41,9 +54,9 @@ echo "CHALK_REPORTS=/path/to/chalk/.data/support.jsonl" >> .env.local
 npm run dev        # http://localhost:4100
 ```
 
-Open **Cycle** and press **Reset demo** to load chalk's beta cycle. Then:
+Open **Insights** and press **Reset demo** to load chalk's beta cycle. Then:
 
-1. **Test**: as Grace, open step 3 of "Draw your first board", press *Didn't work*, and type what happened.
-2. **Review**: work through the queue. Add Femi's note, ask Chen a question, and create the ticket.
-3. **Test** as Chen: open *My notes*, answer the question, and watch his note join the others.
-4. **Tickets**: see the developer's view. **Ideas**: see the backlog. **Cycle**: see the trends.
+1. **Run tests** (as Grace): pass steps 1–2, mark step 3 *It didn't work*, and type what happened.
+2. **Review**: add Femi's note, ask Chen a question, and create the ticket.
+3. Switch to Chen (bottom left), open **My notes**, answer the question, and watch his note join the others.
+4. **Tickets**: the developer's view. **Connect your app**: send feedback from the live widget. **Ideas** and **Insights**: the backlog and the trends.

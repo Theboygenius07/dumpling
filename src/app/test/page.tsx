@@ -1,314 +1,260 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Analysis, Feedback, Verdict } from "@/lib/types";
-import { Avatar, EVIDENCE, KIND, Loading, Meter, STATUS_WORDS, ago, post, stepOf, testerOf, useStore, useToast, type State } from "../ui";
+import { ArrowRight, Check, CircleCheck, ExternalLink, Lightbulb, ListChecks, Lock, Monitor, Send, TriangleAlert, X } from "lucide-react";
+import type { Analysis, Feedback, Script, Step, Verdict } from "@/lib/types";
+import { Avatar, Dots, EVIDENCE, HeardMark, KIND, Meter, post, testerOf, useStore, type State } from "../ui";
 
 type Similar = { id: string; summary: string; count: number; ticketId: string | null; score: number; sameStep: boolean };
 type Coach = { analysis: Analysis | null; similar: Similar[] };
 
-const VERDICTS: { v: Verdict; label: string; cls: string; hint: string }[] = [
-  { v: "worked", label: "Worked", cls: "good", hint: "" },
-  { v: "failed", label: "Didn’t work", cls: "bad", hint: "What happened instead? Your own words are perfect." },
-  { v: "off", label: "Something’s off", cls: "warn", hint: "What felt wrong? Even “it was weird” is a start." },
-  { v: "idea", label: "I have an idea", cls: "idea", hint: "What would make this better?" },
+const CHOICES: { v: Verdict; label: string; hint: string; icon: React.ReactNode; bg: string; fg: string; prompt: string }[] = [
+  { v: "worked", label: "It worked", hint: "Happened as expected", icon: <Check size={14} strokeWidth={3} />, bg: "var(--green)", fg: "#fff", prompt: "" },
+  { v: "failed", label: "It didn’t work", hint: "Broke, stuck or wrong", icon: <X size={14} strokeWidth={3} />, bg: "var(--red)", fg: "#fff", prompt: "What happened instead? Your own words are perfect." },
+  { v: "off", label: "Something felt off", hint: "Worked, but…", icon: <TriangleAlert size={13} strokeWidth={2.6} />, bg: "var(--orange)", fg: "#fff", prompt: "What felt off? Even “it was weird” is a good start." },
+  { v: "idea", label: "I have an idea", hint: "Could be better", icon: <Lightbulb size={13} strokeWidth={2.6} />, bg: "var(--violet)", fg: "#fff", prompt: "What would make this better?" },
 ];
 
 export default function TestPage() {
-  const { s, empty, refresh } = useStore();
-  const [testerId, setTesterId] = useState("t_grace");
-  const [tab, setTab] = useState<"run" | "notes">("run");
-  if (!s) return <Loading empty={empty} />;
-  const tester = testerOf(s, testerId)!;
-  const mine = s.feedback.filter((f) => f.testerId === testerId).sort((a, b) => b.at.localeCompare(a.at));
-  const waiting = mine.filter((f) => f.messages.some((m) => m.question && !m.answered)).length;
-
-  return (
-    <div className="page split">
-      <aside className="stack sticky">
-        <div className="card">
-          <div className="eyebrow">Testing as</div>
-          <div className="who" style={{ marginTop: 8 }}>
-            <Avatar t={tester} />
-            <select value={testerId} onChange={(e) => setTesterId(e.target.value)} style={{ fontWeight: 600 }}>
-              {s.testers.filter((t) => t.id !== "t_field").map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-          </div>
-          <p className="small muted" style={{ marginTop: 8 }}>
-            {tester.env.browser} · {tester.env.os} · {tester.env.device}
-            <br />Attached to every note automatically — no need to type it.
-          </p>
-        </div>
-        <div className="list">
-          <button className={`item ${tab === "run" ? "on" : ""}`} onClick={() => setTab("run")}>
-            <div className="row"><span className="chip accent">Test scripts</span></div>
-            <div className="t">{s.cycle.name}</div>
-          </button>
-          <button className={`item ${tab === "notes" ? "on" : ""}`} onClick={() => setTab("notes")}>
-            <div className="row">
-              <span className="chip">My notes · {mine.length}</span>
-              {waiting > 0 && <span className="chip warn">{waiting} question{waiting > 1 ? "s" : ""} for you</span>}
-            </div>
-            <div className="t">What happened to everything you told us</div>
-          </button>
-        </div>
-        <Heardness mine={mine} />
-      </aside>
-      {tab === "run" ? <Runner s={s} testerId={testerId} refresh={refresh} onNotes={() => setTab("notes")} /> : <Notes s={s} mine={mine} refresh={refresh} />}
-    </div>
-  );
+  const { s, testerId } = useStore();
+  if (!s) return <div className="page empty"><Dots /></div>;
+  return <Runner key={testerId} s={s} testerId={testerId} />;
 }
 
-function Heardness({ mine }: { mine: Feedback[] }) {
-  if (!mine.length) return null;
-  const replied = mine.filter((f) => f.messages.some((m) => m.from === "manager")).length;
-  const tickets = mine.filter((f) => f.status === "ticketed").length;
-  const ideas = mine.filter((f) => f.status === "idea").length;
-  return (
-    <div className="card flat small">
-      <div className="eyebrow">Your notes so far</div>
-      <p style={{ marginTop: 6 }}>
-        <b>{mine.length}</b> sent · <b>{tickets}</b> became tickets · <b>{ideas}</b> in ideas · <b>{replied}</b> got a personal reply
-      </p>
-    </div>
-  );
-}
-
-// ---------- running a script ----------
-
-function Runner({ s, testerId, refresh, onNotes }: { s: State; testerId: string; refresh: () => Promise<unknown>; onNotes: () => void }) {
+function Runner({ s, testerId }: { s: State; testerId: string }) {
   const [scriptId, setScriptId] = useState("s_board");
-  const script = s.scripts.find((x) => x.id === scriptId)!;
-  const [open, setOpen] = useState<string | null>(script.steps[0]!.id);
   const [local, setLocal] = useState<Record<string, Verdict>>({});
-  useEffect(() => setLocal({}), [testerId]);
+  const tester = testerOf(s, testerId)!;
 
   const marks = useMemo(() => {
     const m: Record<string, Verdict> = {};
-    for (const f of s.feedback) if (f.testerId === testerId && f.stepId) m[f.stepId] = f.verdict;
+    for (const f of [...s.feedback].sort((a, b) => a.at.localeCompare(b.at))) if (f.testerId === testerId && f.stepId) m[f.stepId] = f.verdict;
     return { ...m, ...local };
   }, [s.feedback, testerId, local]);
 
+  const script = s.scripts.find((x) => x.id === scriptId)!;
+  const [current, setCurrent] = useState<string | null>(() => script.steps.find((st) => !marks[st.id])?.id ?? null);
+  useEffect(() => { setCurrent(script.steps.find((st) => !marks[st.id])?.id ?? null); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [scriptId]);
+
+  const done = script.steps.filter((st) => marks[st.id]).length;
+  const advance = (st: Step) => setCurrent(script.steps.find((x) => x.n > st.n && !marks[x.id])?.id ?? null);
+
   return (
-    <section className="stack">
-      <div className="row wrap" style={{ justifyContent: "space-between" }}>
+    <div className="page runner">
+      <aside className="scripts stack-16">
         <div>
-          <div className="eyebrow">{s.cycle.name}</div>
-          <h1 style={{ marginTop: 4 }}>Test {s.cycle.product} with us</h1>
-          <p className="lede">Follow each step in chalk, then tell us how it went. There are no wrong answers — “it felt weird” is useful.</p>
+          <div className="eyebrow" style={{ padding: "0 10px 6px" }}>Your test scripts</div>
+          {s.scripts.map((x) => {
+            const n = x.steps.filter((st) => marks[st.id]).length;
+            return (
+              <button key={x.id} className={`script-btn ${x.id === scriptId ? "on" : ""}`} onClick={() => setScriptId(x.id)}>
+                <div className="row between"><span className="t">{x.title}</span><span className="small muted">{n}/{x.steps.length}</span></div>
+                <div className="progress" style={{ marginTop: 9 }}><i style={{ width: `${(n / x.steps.length) * 100}%` }} /></div>
+              </button>
+            );
+          })}
         </div>
-        <a className="btn" href={s.cycle.productUrl} target="_blank" rel="noreferrer">Open chalk ↗</a>
-      </div>
-      <div className="row wrap">
-        {s.scripts.map((x) => (
-          <button key={x.id} className={`btn ${x.id === scriptId ? "ink" : ""}`} onClick={() => { setScriptId(x.id); setOpen(x.steps[0]!.id); }}>
-            {x.title}
-          </button>
-        ))}
-      </div>
-      <div className="stack-sm">
-        {script.steps.map((st) => (
-          <StepCard
-            key={st.id}
-            s={s}
-            testerId={testerId}
-            scriptId={script.id}
-            step={st}
-            mark={marks[st.id]}
-            open={open === st.id}
-            onOpen={() => setOpen(open === st.id ? null : st.id)}
-            onDone={(v) => {
-              setLocal((m) => ({ ...m, [st.id]: v }));
-              const next = script.steps.find((x) => x.n === st.n + 1);
-              if (v === "worked") setOpen(next?.id ?? null);
-              refresh();
-            }}
-            onNotes={onNotes}
-          />
-        ))}
-      </div>
-    </section>
+        <div className="well" style={{ padding: 12 }}>
+          <div className="row"><Avatar t={tester} size="sm" /><b style={{ fontWeight: 500, fontSize: 13.5 }}>Testing as {tester.name.split(" ")[0]}</b></div>
+          <p className="small muted" style={{ marginTop: 8 }}>{tester.env.browser} · {tester.env.os} · {tester.env.device}. Attached to every note for you — no need to type it.</p>
+        </div>
+      </aside>
+
+      <section>
+        <div className="head" style={{ alignItems: "flex-start" }}>
+          <div>
+            <div className="eyebrow">{script.area}</div>
+            <h1 style={{ marginTop: 6 }}>{script.title}</h1>
+            <p>Follow each step in {s.cycle.product}, then tell us how it went. There are no wrong answers.</p>
+          </div>
+          <a className="btn" href={s.cycle.productUrl} target="_blank" rel="noreferrer">Open {s.cycle.product} <ExternalLink size={14} /></a>
+        </div>
+        <div className="row" style={{ marginBottom: 22 }}>
+          <div className="progress grow" style={{ height: 6 }}><i style={{ width: `${(done / script.steps.length) * 100}%` }} /></div>
+          <span className="small muted" style={{ minWidth: 92, textAlign: "right" }}>{done} of {script.steps.length} done</span>
+        </div>
+
+        <div>
+          {script.steps.map((st, i) => {
+            const mark = marks[st.id];
+            const isCur = current === st.id;
+            const last = i === script.steps.length - 1;
+            return (
+              <div key={st.id} className="srow">
+                <div className="srail">
+                  <span className={`snum ${mark ?? (isCur ? "cur" : "")}`}>{mark === "worked" ? <Check size={15} strokeWidth={3} /> : st.n}</span>
+                  {!last && <span className="sline" />}
+                </div>
+                <div className="sbody">
+                  {isCur ? (
+                    <StepCard s={s} script={script} step={st} testerId={testerId} mark={mark}
+                      onWorked={() => { setLocal((m) => ({ ...m, [st.id]: "worked" })); advance(st); }}
+                      onSent={(v) => setLocal((m) => ({ ...m, [st.id]: v }))}
+                      onNext={() => advance(st)} />
+                  ) : (
+                    <button className="scollapsed" onClick={() => setCurrent(st.id)}>
+                      <span className="grow clip">{st.action}</span>
+                      {mark && <span className={`pill ${mark === "worked" ? "good" : mark === "failed" ? "bug" : mark === "off" ? "warn" : "idea"}`}>{CHOICES.find((c) => c.v === mark)!.label}</span>}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          {current === null && done === script.steps.length && (
+            <div className="done" style={{ marginLeft: 38 }}>
+              <span className="tick"><Check size={16} strokeWidth={3} /></span>
+              <div><h3>Script finished — thank you.</h3><p className="small" style={{ marginTop: 4 }}>Everything you sent is with the team. <Link href="/notes" className="link">See what happens to it</Link>.</p></div>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
   );
 }
 
-function StepCard(props: {
-  s: State; testerId: string; scriptId: string; step: State["scripts"][number]["steps"][number]; mark?: Verdict; open: boolean;
-  onOpen: () => void; onDone: (v: Verdict) => void; onNotes: () => void;
+function StepCard({ s, script, step, testerId, mark, onWorked, onSent, onNext }: {
+  s: State; script: Script; step: Step; testerId: string; mark?: Verdict;
+  onWorked: () => void; onSent: (v: Verdict) => void; onNext: () => void;
 }) {
-  const { step, mark, open } = props;
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [sent, setSent] = useState<Feedback | null>(null);
-  useEffect(() => { setVerdict(null); setSent(null); }, [props.testerId]);
-  const markLabel = VERDICTS.find((v) => v.v === mark)?.label;
-
   return (
-    <div className={`step ${open ? "on" : ""} ${mark ? `done-${mark}` : ""}`}>
-      <div className="row" style={{ cursor: "pointer", alignItems: "flex-start" }} onClick={props.onOpen}>
-        <span className="n">{mark === "worked" ? "✓" : step.n}</span>
-        <div className="grow">
-          <div className="act">{step.action}</div>
-          <div className="exp"><b>Expected · </b>{step.expected}</div>
-        </div>
-        {markLabel && <span className={`chip ${VERDICTS.find((v) => v.v === mark)?.cls}`}>{markLabel}</span>}
+    <div className="scard">
+      <div className="row between">
+        <span className="eyebrow">Step {step.n} of {script.steps.length}</span>
+        {mark && !sent && <span className="small muted">You’ve reported on this step — you can add another note.</span>}
       </div>
-      {open && !sent && (
-        <div className="fade-in" style={{ marginTop: 14 }}>
-          <div className="row wrap">
-            {VERDICTS.map((v) => (
-              <button
-                key={v.v}
-                className={`btn ${v.cls} ${verdict === v.v ? "sel" : ""}`}
-                onClick={() => (v.v === "worked" ? props.onDone("worked") : setVerdict(v.v))}
-              >
-                {v.label}
+      <div className="sact">{step.action}</div>
+      <div className="expect"><CircleCheck size={16} /><span><b style={{ fontWeight: 500, color: "var(--ink)" }}>What should happen: </b>{step.expected}</span></div>
+
+      {sent ? (
+        <Sent s={s} f={sent} onNext={onNext} />
+      ) : (
+        <>
+          <div className="label" style={{ marginTop: 16 }}>How did it go?</div>
+          <div className="choices" style={{ marginTop: 8 }}>
+            {CHOICES.map((c) => (
+              <button key={c.v} className={`choice ${verdict === c.v ? "on" : ""}`} onClick={() => (c.v === "worked" ? onWorked() : setVerdict(c.v))}>
+                <span className="ic" style={{ background: c.bg, color: c.fg }}>{c.icon}</span>
+                <span><b>{c.label}</b><span>{c.hint}</span></span>
               </button>
             ))}
           </div>
           {verdict && verdict !== "worked" && (
-            <Composer
-              s={props.s}
-              testerId={props.testerId}
-              scriptId={props.scriptId}
-              stepId={step.id}
-              verdict={verdict}
-              onSent={(f) => { setSent(f); props.onDone(verdict); }}
-            />
+            <Composer key={verdict} s={s} testerId={testerId} scriptId={script.id} step={step} verdict={verdict} onSent={(f) => { setSent(f); onSent(verdict); }} />
           )}
-        </div>
-      )}
-      {open && sent && (
-        <div className="fade-in card flat" style={{ marginTop: 14 }}>
-          <div className="row"><span className="chip good"><span className="dot" /> Sent</span><span className="small muted">A person reads every note</span></div>
-          <p style={{ marginTop: 8 }}>{sent.messages[0]?.text}</p>
-          {sent.groupId && (() => {
-            const g = props.s.groups.find((x) => x.id === sent.groupId);
-            return g && g.memberIds.length > 1 ? <p className="small" style={{ marginTop: 6 }}>You’re not the only one — {g.memberIds.length - 1} other {g.memberIds.length - 1 === 1 ? "tester" : "testers"} saw something like this. Your note backs theirs up.</p> : null;
-          })()}
-          <button className="btn sm" style={{ marginTop: 10 }} onClick={props.onNotes}>Follow it in My notes →</button>
-        </div>
+        </>
       )}
     </div>
   );
 }
 
-function Composer({ s, testerId, scriptId, stepId, verdict, onSent }: { s: State; testerId: string; scriptId: string; stepId: string; verdict: Verdict; onSent: (f: Feedback) => void }) {
+function Composer({ s, testerId, scriptId, step, verdict, onSent }: { s: State; testerId: string; scriptId: string; step: Step; verdict: Verdict; onSent: (f: Feedback) => void }) {
   const [text, setText] = useState("");
   const [coach, setCoach] = useState<Coach | null>(null);
-  const [listening, setListening] = useState(false);
+  const [thinking, setThinking] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
   const [same, setSame] = useState<Record<string, "yes" | "no">>({});
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const seq = useRef(0);
-  const hint = VERDICTS.find((v) => v.v === verdict)!.hint;
+  const tester = testerOf(s, testerId)!;
+  const choice = CHOICES.find((c) => c.v === verdict)!;
 
   useEffect(() => {
-    const words = text.trim().split(/\s+/).filter(Boolean).length;
-    if (words < 1) { setCoach(null); return; }
+    if (text.trim().split(/\s+/).filter(Boolean).length < 2) { setCoach(null); setThinking(false); return; }
     const mine = ++seq.current;
-    setListening(true);
+    setThinking(true);
     const t = setTimeout(async () => {
       try {
-        const r = await post<Coach>("/api/coach", { testerId, scriptId, stepId, verdict, text });
+        const r = await post<Coach>("/api/coach", { testerId, scriptId, stepId: step.id, verdict, text });
         if (seq.current === mine) setCoach(r);
-      } finally {
-        if (seq.current === mine) setListening(false);
+      } catch {} finally {
+        if (seq.current === mine) setThinking(false);
       }
-    }, 900);
+    }, 850);
     return () => clearTimeout(t);
-  }, [text, testerId, scriptId, stepId, verdict]);
+  }, [text, testerId, scriptId, step.id, verdict]);
 
   const a = coach?.analysis;
   const sameAs = Object.entries(same).find(([, v]) => v === "yes")?.[0] ?? null;
   const notSame = Object.entries(same).filter(([, v]) => v === "no").map(([k]) => k);
-  const mark = (id: string, v: "yes" | "no") =>
-    setSame((m) => {
-      const n = { ...m };
-      if (n[id] === v) delete n[id];
-      else {
-        if (v === "yes") for (const k of Object.keys(n)) if (n[k] === "yes") delete n[k];
-        n[id] = v;
-      }
-      return n;
-    });
+  const pick = (id: string, v: "yes" | "no") => setSame((m) => {
+    const n = { ...m };
+    if (n[id] === v) delete n[id];
+    else { if (v === "yes") for (const k of Object.keys(n)) if (n[k] === "yes") delete n[k]; n[id] = v; }
+    return n;
+  });
 
   async function send() {
-    setSending(true);
-    setErr(null);
+    setSending(true); setErr(null);
     try {
-      const f = await post<Feedback>("/api/feedback", { testerId, scriptId, stepId, verdict, text, sameAs, notSame, asked: answer ? a?.question : undefined, answer: answer ?? undefined });
-      onSent(f);
-    } catch (e) {
-      setErr((e as Error).message);
-    } finally {
-      setSending(false);
-    }
+      onSent(await post<Feedback>("/api/feedback", { testerId, scriptId, stepId: step.id, verdict, text, sameAs, notSame, asked: answer ? a?.question : undefined, answer: answer ?? undefined }));
+    } catch (e) { setErr((e as Error).message); } finally { setSending(false); }
   }
 
   return (
-    <div className="grid-2 fade-in" style={{ marginTop: 14, alignItems: "start" }}>
-      <div className="stack-sm">
+    <div className="compose">
+      <div>
         <label className="field">
-          <span>In your own words</span>
-          <textarea autoFocus value={text} onChange={(e) => setText(e.target.value)} placeholder={hint} rows={5} />
+          <span className="label">Tell us in your own words</span>
+          <textarea className="textarea" autoFocus value={text} onChange={(e) => setText(e.target.value)} placeholder={choice.prompt} />
         </label>
-        <p className="small muted">Your browser, device and this step are attached for you.</p>
-        <div className="row">
-          <button className="btn primary lg" disabled={sending || text.trim().length < 2} onClick={send}>
-            {sending ? "Sending…" : "Send to the team"}
-          </button>
-          {a?.question && !answer && <span className="small muted">You can send without answering the question.</span>}
+        <div className="attached">
+          <span><Lock size={12} />Attached for you</span>
+          <span><Monitor size={13} />{tester.env.browser} · {tester.env.os} · {tester.env.device}</span>
+          <span><ListChecks size={13} />Step {step.n}</span>
         </div>
-        {err && <p className="small" style={{ color: "var(--bad)" }}>{err}</p>}
+        <div className="row" style={{ marginTop: 16 }}>
+          <button className="btn primary lg" disabled={sending || text.trim().length < 2} onClick={send}>
+            {sending ? <>Sending <Dots /></> : <>Send to the team <Send size={15} /></>}
+          </button>
+          <span className="small muted">A person reads every note.</span>
+        </div>
+        {err && <p className="small" style={{ color: "var(--bug)", marginTop: 8 }}>{err}</p>}
       </div>
 
-      <div className="coach stack">
-        <div className="row" style={{ justifyContent: "space-between" }}>
-          <div className="eyebrow">Heard is listening</div>
-          {listening && <span className="listening"><span className="dots"><i /><i /><i /></span> reading</span>}
+      <div className="coach" aria-live="polite">
+        <div className="coach-head">
+          <span className="hmark"><HeardMark size={14} /></span>
+          Heard
+          <span className="spacer" />
+          {thinking && <Dots />}
         </div>
-        {!a && <p className="small muted">As you type, Heard says back what it understood, checks whether someone else already reported it, and asks one small question if something’s missing.</p>}
+        {!a && !thinking && <p className="small muted" style={{ marginTop: 10 }}>As you type, I’ll say back what I understood, check whether someone already reported it, and ask one quick question if anything’s missing.</p>}
         {a && (
           <>
-            <div>
-              <div className="small muted">What we understood</div>
-              <p style={{ marginTop: 2, fontWeight: 500 }}>{a.summary}</p>
-              <div className="row wrap" style={{ marginTop: 6 }}>
-                <span className={`chip ${a.kind}`}>{KIND[a.kind]}</span>
-                <span className={`chip ${EVIDENCE[a.evidence].tone}`}>{EVIDENCE[a.evidence].label}</span>
-              </div>
+            <div className="bubble">
+              <div className="label">Here’s what I understood</div>
+              {a.summary}
+              <div className="small muted" style={{ marginTop: 6 }}>Sounds like {a.kind === "idea" ? "an idea" : a.kind === "unclear" ? "something’s wrong" : `a ${KIND[a.kind].toLowerCase()}`} · {EVIDENCE[a.evidence].label.toLowerCase()}</div>
             </div>
             {a.question && (
-              <div className="card flat fade-in">
-                <div className="small muted">One small question — optional</div>
-                <p style={{ marginTop: 2 }}>{a.question}</p>
-                <div className="row wrap" style={{ marginTop: 8 }}>
-                  {a.options.map((o) => (
-                    <button key={o} className={`option ${answer === o ? "sel" : ""}`} onClick={() => setAnswer(answer === o ? null : o)}>{o}</button>
-                  ))}
+              <div className="bubble">
+                <div className="label">One quick question — optional</div>
+                {a.question}
+                <div className="row wrap" style={{ marginTop: 9, gap: 6 }}>
+                  {a.options.map((o) => <button key={o} className={`chipbtn ${answer === o ? "on" : ""}`} onClick={() => setAnswer(answer === o ? null : o)}>{o}</button>)}
                 </div>
               </div>
             )}
             {coach!.similar.length > 0 && (
-              <div className="stack-sm fade-in">
-                <div className="small muted">Someone may have seen this already</div>
+              <div style={{ marginTop: 12 }}>
+                <div className="label">Others reported something like this</div>
                 {coach!.similar.map((x) => (
-                  <div key={x.id} className="card" style={{ padding: 12 }}>
-                    <p style={{ fontWeight: 500 }}>{x.summary}</p>
-                    <div className="row wrap small" style={{ marginTop: 6 }}>
-                      <Meter value={x.score} tone={x.score >= 0.75 ? "good" : "warn"} label="alike" />
-                      {x.sameStep && <span className="chip line">same step</span>}
-                      <span className="chip line">{x.count} {x.count === 1 ? "report" : "reports"}</span>
-                      {x.ticketId && <span className="chip good">already ticket {x.ticketId}</span>}
+                  <div key={x.id} className={`match ${same[x.id] === "yes" ? "on" : ""}`}>
+                    <div style={{ fontSize: 13.5, fontWeight: 500, lineHeight: 1.4 }}>{x.summary}</div>
+                    <div className="row between" style={{ marginTop: 7 }}>
+                      <span className="small muted">{x.count} {x.count === 1 ? "report" : "reports"}{x.sameStep ? " · same step" : ""}{x.ticketId ? ` · ${x.ticketId}` : ""}</span>
+                      <Meter value={x.score} tone={x.score >= 0.8 ? "good" : "warn"} width={48} />
                     </div>
-                    <div className="row" style={{ marginTop: 8 }}>
-                      <button className={`option ${same[x.id] === "yes" ? "sel" : ""}`} onClick={() => mark(x.id, "yes")}>Same thing</button>
-                      <button className={`option ${same[x.id] === "no" ? "sel" : ""}`} onClick={() => mark(x.id, "no")}>Mine’s different</button>
+                    <div className="row" style={{ marginTop: 9, gap: 6 }}>
+                      <button className={`chipbtn ${same[x.id] === "yes" ? "on" : ""}`} onClick={() => pick(x.id, "yes")}>Same as mine</button>
+                      <button className={`chipbtn ${same[x.id] === "no" ? "on" : ""}`} onClick={() => pick(x.id, "no")}>Different</button>
                     </div>
                   </div>
                 ))}
-                <p className="small muted">Either way, send it — a second report of the same problem helps the team fix it.</p>
               </div>
             )}
           </>
@@ -318,73 +264,26 @@ function Composer({ s, testerId, scriptId, stepId, verdict, onSent }: { s: State
   );
 }
 
-// ---------- what happened to my notes ----------
-
-function Notes({ s, mine, refresh }: { s: State; mine: Feedback[]; refresh: () => Promise<unknown> }) {
-  if (!mine.length) return <div className="card empty">Nothing sent yet. Every note you send shows up here, with what happened to it.</div>;
+function Sent({ s, f, onNext }: { s: State; f: Feedback; onNext: () => void }) {
+  const g = s.groups.find((x) => x.id === f.groupId);
+  const others = g ? g.memberIds.filter((id) => id !== f.id).length : 0;
+  const name = testerOf(s, f.testerId)?.name.split(" ")[0];
+  const heard = f.messages.find((m) => m.from === "heard")?.text.match(/We heard: “([^”]*)”/)?.[1];
   return (
-    <section className="stack">
+    <div className="done">
+      <span className="tick"><Check size={16} strokeWidth={3} /></span>
       <div>
-        <h1>My notes</h1>
-        <p className="lede">Every note gets read by a person. Here’s where each one is — including the ones that didn’t become a ticket.</p>
-      </div>
-      {mine.map((f) => <Note key={f.id} s={s} f={f} refresh={refresh} />)}
-    </section>
-  );
-}
-
-function Note({ s, f, refresh }: { s: State; f: Feedback; refresh: () => Promise<unknown> }) {
-  const st = STATUS_WORDS[f.status];
-  const open = f.messages.find((m) => m.question && !m.answered && m.from === "manager");
-  const [pick, setPick] = useState<string | null>(null);
-  const [extra, setExtra] = useState("");
-  const [busy, setBusy] = useState(false);
-  const { toast, Toast } = useToast();
-  return (
-    <div className="card">
-      <div className="row wrap" style={{ justifyContent: "space-between" }}>
-        <span className="small muted">{stepOf(s, f).label} · {ago(f.at)}</span>
-        <span className={`chip ${st.tone}`}><span className="dot" /> {st.label}{f.ticketId ? ` · ${f.ticketId}` : ""}</span>
-      </div>
-      <div className="quote" style={{ marginTop: 8 }}>{f.text}</div>
-      <div className="stack-sm" style={{ marginTop: 10 }}>
-        {f.messages.map((m) => (
-          <div key={m.id} className={`msg ${m.from}`}>
-            <div className="from">{m.from === "heard" ? "Heard" : m.from === "manager" ? s.manager.split(" (")[0] : "You"} · {ago(m.at)}</div>
-            {m.text}
-          </div>
-        ))}
-      </div>
-      {open && (
-        <div className="card flat" style={{ marginTop: 10 }}>
-          <div className="row wrap">
-            {(open.options ?? []).map((o) => (
-              <button key={o} className={`option ${pick === o ? "sel" : ""}`} onClick={() => setPick(pick === o ? null : o)}>{o}</button>
-            ))}
-          </div>
-          <input type="text" style={{ marginTop: 8 }} placeholder="Anything else? (optional)" value={extra} onChange={(e) => setExtra(e.target.value)} />
-          <button
-            className="btn primary"
-            style={{ marginTop: 8 }}
-            disabled={busy || (!pick && !extra.trim())}
-            onClick={async () => {
-              setBusy(true);
-              try {
-                await post("/api/reply", { feedbackId: f.id, text: [pick, extra.trim()].filter(Boolean).join(" — ") });
-                await refresh();
-                toast("Sent — thank you.");
-              } catch (e) {
-                toast((e as Error).message);
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            {busy ? "Sending…" : "Send answer"}
-          </button>
+        <h3>Sent — thank you, {name}.</h3>
+        {heard && <p style={{ marginTop: 6 }}>We heard: “{heard}”</p>}
+        <p className="small" style={{ marginTop: 6, color: "var(--ink-2)" }}>
+          {others > 0 ? `You’re not the only one — ${others} other ${others === 1 ? "report says" : "reports say"} the same, so yours helps pin it down. ` : ""}
+          A person reads every note, and you’ll see what happens to it in My notes.
+        </p>
+        <div className="row" style={{ marginTop: 14 }}>
+          <button className="btn primary" onClick={onNext}>Next step <ArrowRight size={15} /></button>
+          <Link href="/notes" className="btn ghost">Track it in My notes</Link>
         </div>
-      )}
-      <Toast />
+      </div>
     </div>
   );
 }

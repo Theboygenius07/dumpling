@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Nav } from "./Nav";
+import { Shell } from "./Shell";
+import { StoreProvider } from "./ui";
 
 export const metadata: Metadata = {
   title: "Heard — UAT, untangled",
@@ -11,8 +12,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <Nav />
-        <main>{children}</main>
+        <StoreProvider>
+          <Shell>{children}</Shell>
+        </StoreProvider>
       </body>
     </html>
   );

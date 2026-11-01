@@ -1,4 +1,4 @@
-import { analyze, compare, contextFor, cosine, embed, overlap, reportText, themeOf, type Context } from "./ai";
+import { analyze, compare, contextFor, cosine, embed, overlap, reportText, themeOf, titleOf, type Context } from "./ai";
 import { now, uid } from "./store";
 import type { Feedback, Group, Kind, Link, Store } from "./types";
 
@@ -149,7 +149,8 @@ export async function place(s: Store, f: Feedback) {
     await retitleIdea(s, target);
     return;
   }
-  const g: Group = { id: uid("g"), title: f.analysis?.summary ?? f.text, memberIds: [f.id], status: "open", createdBy: "heard", ticketId: null, draft: null };
+  const title = fam === "idea" ? await themeOf([f.text]) : await titleOf([f.analysis?.summary ?? f.text]);
+  const g: Group = { id: uid("g"), title: title ?? f.analysis?.summary ?? f.text, memberIds: [f.id], status: "open", createdBy: "heard", ticketId: null, draft: null };
   s.groups.push(g);
   f.groupId = g.id;
 }
@@ -165,13 +166,18 @@ export function leave(s: Store, f: Feedback) {
 
 export async function retitleIdea(s: Store, g: Group) {
   const texts = g.memberIds.map((id) => s.feedback.find((f) => f.id === id)?.text ?? "").filter(Boolean);
-  if (texts.length < 2) return;
+  if (!texts.length) return;
   g.title = (await themeOf(texts)) ?? g.title;
 }
 
 /** The full read of one report: understand it, embed it, link it, place it. */
+export function capturedOf(f: Feedback) {
+  if (!f.origin) return "";
+  return [f.origin.page ? `page ${f.origin.page}` : "", f.origin.errors?.length ? `recent errors: ${f.origin.errors.join(" | ")}` : ""].filter(Boolean).join("; ");
+}
+
 export async function triage(s: Store, f: Feedback) {
-  f.analysis = await analyze(f, ctxOf(s, f), answersOf(f));
+  f.analysis = await analyze(f, ctxOf(s, f), answersOf(f), capturedOf(f));
   const [e] = (await embed([embedText(s, f)])) ?? [];
   if (e) f.embedding = e;
   await relink(s, f);

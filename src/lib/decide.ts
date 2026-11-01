@@ -1,3 +1,4 @@
+import { titleOf } from "./ai";
 import { now, uid } from "./store";
 import { leave, linksOf, pairKey, place, relink, retitleIdea, stamp, triage } from "./triage";
 import type { Feedback, Kind, Severity, Store, TicketDraft } from "./types";
@@ -99,7 +100,7 @@ export async function decide(s: Store, a: Action): Promise<string> {
       if (f.status === "ticketed") throw new Refused("That’s already part of a ticket.");
       for (const l of linksOf(s, f.id)) if (g.memberIds.includes(l.a === f.id ? l.b : l.a)) l.human = "different";
       leave(s, f);
-      s.groups.push({ id: uid("g"), title: f.analysis?.summary ?? f.text, memberIds: [f.id], status: "open", createdBy: "manager", ticketId: null, draft: null });
+      s.groups.push({ id: uid("g"), title: (await titleOf([f.analysis?.summary ?? f.text])) ?? f.analysis?.summary ?? f.text, memberIds: [f.id], status: "open", createdBy: "manager", ticketId: null, draft: null });
       f.groupId = s.groups[s.groups.length - 1]!.id;
       stamp(s, { action: "split", target: f.id, aiSaid: `same as “${g.title}”`, humanSaid: "a different problem", overruled: true });
       return f.groupId;

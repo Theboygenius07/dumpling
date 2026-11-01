@@ -71,8 +71,9 @@ Return JSON with exactly these keys:
 - facts: 1-4 short atomic facts from the note (e.g. "waited ~3 minutes", "console: WebSocket closed (1006)", "on iPad"). Only what they actually said.
 Never invent details the tester did not give.`;
 
-export async function analyze(f: Pick<Feedback, "verdict" | "text">, ctx: Context, answers = ""): Promise<Analysis> {
-  const out = await json<Partial<Analysis>>(ANALYZE, describe(f, ctx, answers ? `Their answers to follow-up questions: ${answers}` : ""));
+export async function analyze(f: Pick<Feedback, "verdict" | "text">, ctx: Context, answers = "", captured = ""): Promise<Analysis> {
+  const extra = [answers ? `Their answers to follow-up questions: ${answers}` : "", captured ? `Captured automatically by the app (not written by the user): ${captured}` : ""].filter(Boolean).join("\n");
+  const out = await json<Partial<Analysis>>(ANALYZE, describe(f, ctx, extra));
   if (out && typeof out.summary === "string") {
     return {
       kind: (["bug", "idea", "question", "praise", "unclear"] as Kind[]).includes(out.kind as Kind) ? (out.kind as Kind) : "unclear",
@@ -231,7 +232,14 @@ export async function draftReply(purpose: string, input: string): Promise<{ text
   return { text: out.text, options: Array.isArray(out.options) ? out.options.map(String).slice(0, 4) : [] };
 }
 
-const THEME = `Name the shared theme of these product ideas from testers in 2-5 words (e.g. "Export and print boards"). Return JSON {"theme": string}.`;
+const TITLE = `Write a short title for a bug report from UAT on chalk, an AI teaching whiteboard, the way a good bug tracker would: under 55 characters, names the symptom and where it happens ("Share link asks viewers to sign in"). No full stop. Never mention "the tester". Return JSON {"title": string}.`;
+
+export async function titleOf(texts: string[]): Promise<string | null> {
+  const out = await json<{ title?: string }>(TITLE, texts.map((t, i) => `${i + 1}. ${t}`).join("\n"));
+  return typeof out?.title === "string" && out.title.trim() ? out.title.trim().replace(/\.$/, "") : null;
+}
+
+const THEME = `Name the product idea (or the shared theme of several ideas) from testers in 2-5 words, like a backlog item (e.g. "Export and print boards", "Choose the narrator's voice"). Return JSON {"theme": string}.`;
 
 export async function themeOf(texts: string[]): Promise<string | null> {
   const out = await json<{ theme?: string }>(THEME, texts.map((t, i) => `${i + 1}. ${t}`).join("\n"));

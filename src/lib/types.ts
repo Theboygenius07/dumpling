@@ -59,7 +59,8 @@ export type Feedback = {
   verdict: Verdict;
   text: string;
   at: string;
-  source: "tester" | "chalk-report";
+  source: "tester" | "chalk-report" | "app";
+  origin?: { sourceId: string; page?: string | null; rating?: number | null; errors?: string[] };
   sameAs: string | null; // the tester themselves said "same as this one"
   notSame?: string[]; // ...or "mine's different"
   analysis: Analysis | null;
@@ -137,6 +138,9 @@ export type Decision = {
   overruled: boolean;
 };
 
+/** Somewhere feedback comes from besides scripted testing: an app's widget, an API, chalk's own reports. */
+export type Source = { id: string; name: string; kind: "widget" | "api" | "chalk"; key: string; createdAt: string; count: number; lastAt: string | null };
+
 export type Cycle = { id: string; name: string; product: string; productUrl: string; startedAt: string; endsAt: string };
 
 export type Store = {
@@ -150,4 +154,5 @@ export type Store = {
   decisions: Decision[];
   nextTicket: number;
   manager: string;
+  sources?: Source[];
 };

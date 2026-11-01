@@ -1,6 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { seed } from "@/lib/seed";
+import { ensureSources } from "@/lib/sources";
 import { replace } from "@/lib/store";
 import { triageAll } from "@/lib/triage";
 import type { Store } from "@/lib/types";
@@ -36,6 +37,8 @@ export async function POST(req: Request) {
     await fs.mkdir(path.dirname(CACHE), { recursive: true });
     await fs.writeFile(CACHE, JSON.stringify(s));
   }
+  s.sources = undefined;
+  ensureSources(s);
   await replace(s);
   return Response.json({ ok: true, feedback: s.feedback.length, groups: s.groups.length });
 }

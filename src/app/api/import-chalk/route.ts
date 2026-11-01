@@ -1,4 +1,5 @@
 import { promises as fs } from "node:fs";
+import { ensureSources } from "@/lib/sources";
 import { change, uid } from "@/lib/store";
 import { ack, triage } from "@/lib/triage";
 import type { Feedback } from "@/lib/types";
@@ -34,6 +35,8 @@ export async function POST() {
       ack(s, f);
       n++;
     }
+    const src = ensureSources(s).find((x) => x.kind === "chalk");
+    if (src && n) { src.count += n; src.lastAt = new Date().toISOString(); }
     return n;
   });
   return Response.json({ imported });
