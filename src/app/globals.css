@@ -192,7 +192,8 @@ label.field > span { display: block; font-size: 13px; font-weight: 500; color: v
 /* ---------- layout ---------- */
 .split { display: grid; grid-template-columns: 300px 1fr; gap: 24px; align-items: start; }
 .split-3 { display: grid; grid-template-columns: 300px minmax(0, 1fr) 410px; gap: 20px; align-items: start; }
-.sticky { position: sticky; top: 84px; }
+/* A pinned column taller than the window scrolls itself, so its last button is always reachable. */
+.sticky { position: sticky; top: 84px; max-height: calc(100vh - 100px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 2px; margin: -2px; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }

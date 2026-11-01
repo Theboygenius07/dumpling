@@ -76,7 +76,7 @@ export default function ReviewPage() {
       </div>
 
       <div className="split-3">
-        <aside className="list sticky" style={{ maxHeight: "calc(100vh - 110px)", overflow: "auto", paddingBottom: 12 }}>
+        <aside className="list sticky" style={{ paddingBottom: 12 }}>
           {items.map((i) => <QueueRow key={i.id} s={s} i={i} on={current?.id === i.id} onClick={() => setSel(i.id)} />)}
           {!items.length && <div className="card empty">Nothing waiting. Every note has had a person’s decision.</div>}
           {waiting.length > 0 && (
