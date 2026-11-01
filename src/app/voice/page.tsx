@@ -124,7 +124,7 @@ export default function VoicePage() {
           <p style={{ fontSize: 30, lineHeight: 1.45, fontWeight: 500, letterSpacing: "-0.015em", marginTop: 14, color: phase === "recording" ? "var(--text)" : "var(--text)" }}>
             {parts.map((p, i) => p === "[your name]" ? <span key={i} style={{ color: "var(--accent-2)", borderBottom: "2px dashed var(--accent)" }}>[your name]</span> : <span key={i}>{p}</span>)}
           </p>
-          {idx === 0 && <p className="small muted" style={{ marginTop: 10 }}>Say your own name where it’s highlighted. Change any word that doesn’t sound like you.</p>}
+          {idx === 0 && <p className="small muted" style={{ marginTop: 10 }}>Talk like you’re telling a friend. Change any word that doesn’t sound like you — the film times itself to whatever you say.</p>}
 
           <div className="row" style={{ marginTop: 34, gap: 12 }}>
             {phase === "recording" ? (
