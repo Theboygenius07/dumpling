@@ -4,13 +4,15 @@ import { Check } from "lucide-react";
 import type { Analysis, Feedback, Group, Kind, Link, Severity, Store, Tester, Ticket } from "@/lib/types";
 
 export type WorkspaceRef = { id: string; name: string; createdAt: string };
-export type State = Store & { model: boolean; workspace: string; workspaces: WorkspaceRef[] };
+export type Me = { id: string; email: string; name: string; role: "manager" | "tester" | "developer"; testerId: string | null };
+export type State = Store & { model: boolean; workspace: string; workspaces: WorkspaceRef[]; me: Me; demo: boolean };
 
 // ---------- one store, one poll, for the whole app ----------
 
 type Ctx = {
   s: State | null;
   empty: boolean;
+  me: Pick<Me, "id" | "email" | "name"> | null;
   workspaces: WorkspaceRef[];
   switchTo: (id: string) => Promise<void>;
   refresh: () => Promise<State | null>;
@@ -24,12 +26,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [s, setS] = useState<State | null>(null);
   const [empty, setEmpty] = useState(false);
   const [workspaces, setWorkspaces] = useState<WorkspaceRef[]>([]);
+  const [me, setMe] = useState<Ctx["me"]>(null);
   const [testerId, setTester] = useState("t_grace");
   const [msg, setMsg] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    const r = await fetch("/api/state", { cache: "no-store" }).then((r) => r.json()).catch(() => null);
+    const res = await fetch("/api/state", { cache: "no-store" }).catch(() => null);
+    if (!res) return null;
+    // Signed out (or the session ended elsewhere): go to sign-in, unless already on an account page.
+    if (res.status === 401) {
+      if (!/^\/(signin|signup)/.test(location.pathname)) location.href = `/signin?next=${encodeURIComponent(location.pathname)}`;
+      return null;
+    }
+    const r = await res.json().catch(() => null);
     if (!r) return null;
+    setMe(r.me ?? null);
     setWorkspaces(r.workspaces ?? []);
     if (r.empty) { setEmpty(true); setS(null); return null; }
     setEmpty(false);
@@ -39,6 +50,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try { const saved = localStorage.getItem("dumpling.tester"); if (saved) setTester(saved); } catch {}
+    if (/^\/(signin|signup)/.test(location.pathname)) return;
     refresh();
     const t = setInterval(refresh, 4000);
     return () => clearInterval(t);
@@ -60,9 +72,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     await refresh();
   }, [refresh]);
 
-  // A tester chosen in another workspace doesn't exist here: fall back to this one's first.
-  const effectiveTester = s && !s.testers.some((t) => t.id === testerId) ? (s.testers.find((t) => t.id.startsWith("t_"))?.id ?? "") : testerId;
-  const value = useMemo(() => ({ s, empty, workspaces, switchTo, refresh, testerId: effectiveTester, setTesterId, toast: setMsg }), [s, empty, workspaces, switchTo, refresh, effectiveTester, setTesterId]);
+  // Who you test as. In the demo a manager may act as one of the sample testers;
+  // everyone else is always themselves — the server enforces the same rule.
+  const acting = !!s && s.demo && s.me.role === "manager";
+  const samples = s ? s.testers.filter((t) => !t.userId && t.id.startsWith("t_")) : [];
+  const effectiveTester = !s ? testerId : acting ? (samples.some((t) => t.id === testerId) ? testerId : samples[0]?.id ?? s.me.testerId ?? "") : s.me.testerId ?? "";
+  const value = useMemo(() => ({ s, empty, me, workspaces, switchTo, refresh, testerId: effectiveTester, setTesterId, toast: setMsg }), [s, empty, me, workspaces, switchTo, refresh, effectiveTester, setTesterId]);
   return (
     <StoreCtx.Provider value={value}>
       {children}

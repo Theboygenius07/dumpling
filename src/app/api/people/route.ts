@@ -1,4 +1,5 @@
-import { change, uid, wsOf } from "@/lib/store";
+import { access } from "@/lib/access";
+import { change, uid } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
@@ -6,9 +7,11 @@ type Body = { action?: "add" | "remove"; id?: string; name?: string; browser?: s
 
 /** The testers in this workspace. Anyone who has sent a note stays, so the record stays honest. */
 export async function POST(req: Request) {
+  const a = await access(req, "manage");
+  if (a instanceof Response) return a;
   const b = (await req.json().catch(() => null)) as Body | null;
   try {
-    const out = await change(await wsOf(req), (s) => {
+    const out = await change(a.ws, (s) => {
       if (b?.action === "add") {
         const name = b.name?.trim().slice(0, 60);
         if (!name) throw new Error("Give them a name.");

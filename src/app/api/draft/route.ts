@@ -1,5 +1,6 @@
 import { contextFor, draftReply, draftTicket } from "@/lib/ai";
-import { change, read, wsOf } from "@/lib/store";
+import { access } from "@/lib/access";
+import { change, read } from "@/lib/store";
 import type { Store, TicketDraft } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -47,7 +48,9 @@ export async function POST(req: Request) {
   const b = (await req.json().catch(() => null)) as { groupId?: string; feedbackId?: string; purpose?: string; fresh?: boolean; reason?: string } | null;
   if (!b) return Response.json({ message: "Nothing to draft." }, { status: 400 });
 
-  const ws = await wsOf(req);
+  const a = await access(req, "manage");
+  if (a instanceof Response) return a;
+  const ws = a.ws;
   if (b.groupId) {
     const out = await change(ws, async (s) => {
       const g = s.groups.find((x) => x.id === b.groupId);

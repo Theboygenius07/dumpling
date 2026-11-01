@@ -2,10 +2,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ChartColumn, Check, ChevronsUpDown, FlaskConical, Inbox, Lightbulb, ListChecks, Plug, Plus, Settings, Ticket, UserPlus } from "lucide-react";
+import { ChartColumn, Check, ChevronsUpDown, FlaskConical, Inbox, Lightbulb, ListChecks, LogOut, Plug, Plus, Settings, Ticket, UserPlus } from "lucide-react";
 import { Avatar, Dots, DumplingMark, queue, useStore } from "./ui";
 
 type Role = "tester" | "manager" | "developer" | "workspace";
+type Area = Role;
 type Item = { href: string; label: string; icon: React.ReactNode; role: Role; n?: number; hot?: boolean };
 
 function roleOf(path: string): Role {
@@ -19,8 +20,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const role = roleOf(path);
   const { s, empty, testerId } = useStore();
-  // The voiceover recorder is a full-screen tool, not part of the product.
-  if (path.startsWith("/voice")) return <>{children}</>;
+  // The voiceover recorder and the account pages are full-screen, outside the app frame.
+  if (path.startsWith("/voice") || path.startsWith("/signin") || path.startsWith("/signup")) return <>{children}</>;
   // A fresh install has no workspace yet: welcome, except on the page that makes one.
   if (empty && !path.startsWith("/workspaces")) return <Welcome />;
 
@@ -48,14 +49,20 @@ export function Shell({ children }: { children: React.ReactNode }) {
       { href: "/settings", label: "Settings", icon: <Settings size={15} />, role: "workspace" },
     ] },
   ];
+  // The interface shows each role what it can use; the server enforces the same rules.
+  const can: Record<string, Role[]> = { Tester: ["manager", "tester"], "UAT manager": ["manager"], Developer: ["manager", "developer"], Workspace: ["manager"] };
+  const myRole = s?.me.role ?? "manager";
+  const shown = groups.filter((g) => can[g.label]!.includes(myRole as Role));
   const here = groups.flatMap((g) => g.items).find((i) => path.startsWith(i.href));
+  const areaRoles: Record<Area, Role[]> = { tester: ["manager", "tester"], manager: ["manager"], developer: ["manager", "developer"], workspace: ["manager"] };
+  const allowed = !s || !here || areaRoles[here.role].includes(myRole as Role);
 
   return (
     <div className="app">
       <aside className="side">
         <Link href="/insights" className="ws"><span className="ws-mark"><DumplingMark size={15} /></span>Dumpling</Link>
         <WorkspaceSwitcher />
-        {groups.map((g) => (
+        {shown.map((g) => (
           <div key={g.label}>
             <div className="sgroup">{g.label}</div>
             {g.items.map((i) => (
@@ -66,7 +73,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             ))}
           </div>
         ))}
-        <div className="side-foot"><Persona /></div>
+        <div className="side-foot">{s?.demo && s.me.role === "manager" && <Persona />}<Account /></div>
       </aside>
       <div className="main">
         <header className="ph">
@@ -74,7 +81,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <span className="spacer" />
           <Viewing role={role} />
         </header>
-        <div className="content">{children}</div>
+        <div className="content">
+          {allowed ? children : (
+            <div className="page panel"><div className="empty"><b style={{ color: "var(--text)", fontWeight: 500 }}>Not part of your role here</b><p className="small" style={{ maxWidth: 380 }}>You’re a {myRole} in {s?.cycle.product}. A manager can change your role in Settings › People.</p></div></div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -143,9 +154,38 @@ function Welcome() {
   );
 }
 
+function Account() {
+  const { s, me } = useStore();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    addEventListener("mousedown", close);
+    return () => removeEventListener("mousedown", close);
+  }, [open]);
+  if (!me) return null;
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      {open && (
+        <div className="menu" role="menu">
+          <div className="menu-label">{me.email}</div>
+          <button role="menuitem" onClick={async () => { await fetch("/api/auth/signout", { method: "POST" }); location.href = "/signin"; }}><LogOut size={14} /><span style={{ fontSize: 13 }}>Sign out</span></button>
+        </div>
+      )}
+      <button className="me-btn" onClick={() => setOpen(!open)} aria-haspopup="menu" aria-expanded={open}>
+        <Avatar t={me} />
+        <span className="grow"><div className="nm">{me.name}</div><div className="sb">{s ? `${s.me.role[0]!.toUpperCase()}${s.me.role.slice(1)} · ${s.cycle.product}` : "Signed in"}</div></span>
+        <ChevronsUpDown size={14} className="muted" />
+      </button>
+    </div>
+  );
+}
+
 function Viewing({ role }: { role: Role }) {
   const { s, testerId } = useStore();
   if (!s) return null;
+  if (!(s.demo && s.me.role === "manager")) return <span className="viewing"><Avatar t={s.me} size="sm" />{s.me.name} · {s.me.role}</span>;
   if (role === "tester") {
     const t = s.testers.find((x) => x.id === testerId) ?? s.testers[0];
     if (!t) return <span className="viewing" style={{ paddingLeft: 9 }}>No testers yet</span>;
@@ -166,14 +206,14 @@ function Persona() {
     return () => removeEventListener("mousedown", close);
   }, [open]);
   if (!s) return null;
-  const people = s.testers.filter((x) => x.id.startsWith("t_") && x.id !== "t_field");
+  const people = s.testers.filter((x) => !x.userId && x.id.startsWith("t_") && x.id !== "t_field");
   if (!people.length) return <Link href="/settings?tab=people" className="me-btn"><span className="avatar" style={{ background: "var(--raise)", color: "var(--text-2)" }}><UserPlus size={13} /></span><span className="grow"><div className="nm">Add testers</div><div className="sb">No one is testing yet</div></span></Link>;
   const t = people.find((x) => x.id === testerId) ?? people[0]!;
   return (
     <div ref={ref}>
       {open && (
         <div className="menu" role="menu">
-          <div className="menu-label">Test as…</div>
+          <div className="menu-label">Demo: act as a sample tester</div>
           {people.map((x) => (
             <button key={x.id} role="menuitem" className={x.id === t.id ? "on" : ""} onClick={() => { setTesterId(x.id); setOpen(false); }}>
               <Avatar t={x} size="sm" />
@@ -185,7 +225,7 @@ function Persona() {
       )}
       <button className="me-btn" onClick={() => setOpen(!open)} aria-haspopup="menu" aria-expanded={open} data-testid="persona">
         <Avatar t={t} />
-        <span className="grow"><div className="nm">{t.name}</div><div className="sb">Testing as · {t.env.browser}</div></span>
+        <span className="grow"><div className="nm">{t.name}</div><div className="sb">Demo tester · {t.env.browser}</div></span>
         <ChevronsUpDown size={14} className="muted" />
       </button>
     </div>

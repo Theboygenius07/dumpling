@@ -1,15 +1,18 @@
 import { decide, Refused, type Action } from "@/lib/decide";
-import { change, wsOf } from "@/lib/store";
+import { access } from "@/lib/access";
+import { change } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 export async function POST(req: Request) {
+  const a = await access(req, "manage");
+  if (a instanceof Response) return a;
   const body = (await req.json().catch(() => null)) as Action | Action[] | null;
   // One decision per request, by construction: there is no batch form.
   if (!body || Array.isArray(body) || typeof body !== "object") return Response.json({ message: "One decision at a time." }, { status: 400 });
   try {
-    const result = await change(await wsOf(req), (s) => decide(s, body));
+    const result = await change(a.ws, (s) => decide(s, body));
     return Response.json({ ok: true, result });
   } catch (e) {
     const msg = e instanceof Refused ? e.message : "That didn’t go through — try again.";

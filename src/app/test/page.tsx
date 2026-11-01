@@ -19,8 +19,16 @@ export default function TestPage() {
   const { s, testerId } = useStore();
   if (!s) return <div className="page empty"><Dots /></div>;
   if (!s.scripts.length) return <div className="page panel"><Empty icon={<ListChecks size={18} />} title="No test scripts yet">Write the steps testers will follow in <Link className="link" href="/settings?tab=scripts">Settings › Test scripts</Link>.</Empty></div>;
-  if (!testerOf(s, testerId)) return <div className="page panel"><Empty icon={<ListChecks size={18} />} title="No testers yet">Add the people testing {s.cycle.product} in <Link className="link" href="/settings?tab=people">Settings › People</Link>, then pick one at the bottom left.</Empty></div>;
+  if (s.me.role === "developer") return <div className="page panel"><Empty icon={<ListChecks size={18} />} title="Testing isn’t part of your role here">Developers see the tickets testers’ notes become. <Link className="link" href="/tickets">Go to Tickets</Link></Empty></div>;
+  if (!testerOf(s, testerId)) return <EnsureTester />;
   return <Runner key={`${s.workspace}:${testerId}`} s={s} testerId={testerId} />;
+}
+
+/** The first time someone tests, they get a tester record — their setup read from this browser. */
+function EnsureTester() {
+  const { refresh } = useStore();
+  useEffect(() => { post("/api/me/tester", {}).then(() => refresh()).catch(() => {}); }, [refresh]);
+  return <div className="page empty"><Dots /></div>;
 }
 
 function Runner({ s, testerId }: { s: State; testerId: string }) {

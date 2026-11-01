@@ -1,5 +1,7 @@
 import { analyze, contextFor, cosine, embed, overlap } from "@/lib/ai";
-import { read, wsOf } from "@/lib/store";
+import { access, testerFor } from "@/lib/access";
+import { envFrom } from "@/lib/sources";
+import { read } from "@/lib/store";
 import { alike } from "@/lib/triage";
 import type { Verdict } from "@/lib/types";
 
@@ -9,10 +11,15 @@ export const dynamic = "force-dynamic";
 // whether someone already reported it. It never changes anything.
 export async function POST(req: Request) {
   const b = (await req.json().catch(() => null)) as { testerId?: string; scriptId?: string | null; stepId?: string | null; verdict?: Verdict; text?: string } | null;
-  const s = await read(await wsOf(req));
+  const a = await access(req, "test");
+  if (a instanceof Response) return a;
+  const s = await read(a.ws);
   const text = b?.text?.trim() ?? "";
   if (!s || !b || text.split(/\s+/).length < 2) return Response.json({ analysis: null, similar: [] });
-  const ctx = contextFor({ testerId: b.testerId ?? "", scriptId: b.scriptId ?? null, stepId: b.stepId ?? null }, s.testers, s.scripts);
+  const me = testerFor(s, a, req, b.testerId, false);
+  const ctx = contextFor({ testerId: me ?? "", scriptId: b.scriptId ?? null, stepId: b.stepId ?? null }, s.testers, s.scripts);
+  // Someone testing for the first time has no tester record yet: their browser still says what they’re on.
+  ctx.tester ??= { id: "", name: a.user.name, env: envFrom(req.headers.get("user-agent") ?? "") };
   const verdict = b.verdict ?? "off";
   const [analysis, vecs] = await Promise.all([
     analyze({ verdict, text }, ctx),
@@ -22,7 +29,7 @@ export async function POST(req: Request) {
   const fam = (k?: string) => (k === "bug" || k === "unclear" ? "bug" : k === "idea" ? "idea" : null);
   const mine = fam(analysis.kind) ?? (verdict === "idea" ? "idea" : "bug");
   const similar = s.feedback
-    .filter((f) => fam(f.analysis?.kind) === mine && f.testerId !== b.testerId)
+    .filter((f) => fam(f.analysis?.kind) === mine && f.testerId !== me)
     .map((f) => {
       const t = v && f.embedding ? alike(cosine(v, f.embedding)) : overlap(text, f.text);
       const sameStep = !!b.stepId && f.stepId === b.stepId;

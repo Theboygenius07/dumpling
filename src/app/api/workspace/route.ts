@@ -1,15 +1,17 @@
-import { change, renameWorkspace, wsOf } from "@/lib/store";
+import { access } from "@/lib/access";
+import { change } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
 /** The workspace's product: what Dumpling tells the model it is testing, and how tickets are numbered. */
 export async function POST(req: Request) {
+  const a = await access(req, "manage");
+  if (a instanceof Response) return a;
   const b = (await req.json().catch(() => null)) as { product?: string; productAbout?: string; ticketPrefix?: string; productUrl?: string; name?: string; manager?: string } | null;
   const product = b?.product?.trim().slice(0, 40) ?? "";
   if (!product) return Response.json({ message: "Give the product a name." }, { status: 400 });
   const prefix = (b?.ticketPrefix ?? "").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 5);
-  const ws = await wsOf(req);
-  const c = await change(ws, (s) => {
+  const c = await change(a.ws, (s) => {
     s.cycle.product = product;
     s.cycle.productAbout = b?.productAbout?.trim().slice(0, 120) ?? "";
     s.cycle.ticketPrefix = prefix || s.cycle.ticketPrefix || "T";
@@ -18,6 +20,5 @@ export async function POST(req: Request) {
     if (b?.manager?.trim()) s.manager = `${b.manager.trim().slice(0, 40)} (UAT manager)`;
     return s.cycle;
   });
-  if (ws) await renameWorkspace(ws, product);
   return Response.json({ ok: true, cycle: c });
 }

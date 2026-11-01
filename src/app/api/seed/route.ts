@@ -3,6 +3,7 @@ import path from "node:path";
 import { seed } from "@/lib/seed";
 import { setProduct } from "@/lib/ai";
 import { ensureSources } from "@/lib/sources";
+import { addMember, roleOf, userFrom } from "@/lib/auth";
 import { DEMO_WS, replace, wsCookie } from "@/lib/store";
 import { triageAll } from "@/lib/triage";
 import type { Store } from "@/lib/types";
@@ -15,6 +16,11 @@ export const maxDuration = 300;
 const CACHE = path.join(process.cwd(), "data", "seed-cache.json");
 
 export async function POST(req: Request) {
+  const user = await userFrom(req);
+  if (!user) return Response.json({ message: "Sign in first." }, { status: 401 });
+  // Resetting the demo is a manager's call; opening it for the first time makes you its manager.
+  const role = await roleOf(user.id, DEMO_WS);
+  if (role && role !== "manager") return Response.json({ message: "Only a manager can reset the demo." }, { status: 403 });
   const fresh = new URL(req.url).searchParams.get("fresh") === "1";
   let s: Store | null = null;
   if (!fresh) {
@@ -43,7 +49,8 @@ export async function POST(req: Request) {
   s.cycle.ticketPrefix ??= "CH";
   s.sources = undefined;
   ensureSources(s, true);
-  await replace(DEMO_WS, s, "chalk");
+  await replace(DEMO_WS, s);
+  if (!role) await addMember(DEMO_WS, user.id, "manager");
   // Loading the demo also opens it in this browser.
   return Response.json({ ok: true, feedback: s.feedback.length, groups: s.groups.length }, { headers: { "set-cookie": wsCookie(DEMO_WS) } });
 }

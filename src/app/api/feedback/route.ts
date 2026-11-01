@@ -1,4 +1,5 @@
-import { change, now, uid, wsOf } from "@/lib/store";
+import { access, testerFor } from "@/lib/access";
+import { change, now, uid } from "@/lib/store";
 import { ack, triage } from "@/lib/triage";
 import type { Feedback, Verdict } from "@/lib/types";
 
@@ -8,15 +9,17 @@ export const maxDuration = 120;
 type Body = { testerId?: string; scriptId?: string | null; stepId?: string | null; verdict?: Verdict; text?: string; sameAs?: string | null; notSame?: string[]; asked?: string; answer?: string };
 
 export async function POST(req: Request) {
-  const b = (await req.json().catch(() => null)) as Body | null;
-  const text = b?.text?.trim() ?? "";
-  if (!b?.testerId || text.length < 2) return Response.json({ message: "Say what happened, in a few words." }, { status: 400 });
+  const b = ((await req.json().catch(() => null)) as Body | null) ?? {};
+  const text = b.text?.trim() ?? "";
+  if (text.length < 2) return Response.json({ message: "Say what happened, in a few words." }, { status: 400 });
+  const a = await access(req, "test");
+  if (a instanceof Response) return a;
   const verdict: Verdict = (["worked", "failed", "off", "idea"] as const).includes(b.verdict as Verdict) ? (b.verdict as Verdict) : "off";
-  const f = await change(await wsOf(req), async (s) => {
-    if (!s.testers.some((t) => t.id === b.testerId)) throw new Error("Unknown tester");
+  const f = await change(a.ws, async (s) => {
+    const testerId = testerFor(s, a, req, b.testerId)!;
     const f: Feedback = {
       id: uid("f"),
-      testerId: b.testerId!,
+      testerId,
       scriptId: b.scriptId ?? null,
       stepId: b.stepId ?? null,
       verdict,

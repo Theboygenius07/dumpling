@@ -8,7 +8,7 @@ import { Avatar, Dots, Empty, DumplingMark, NOTE_ICON, NOTE_STATUS, Status, ago,
 export default function NotesPage() {
   const { s, testerId } = useStore();
   if (!s) return <div className="page empty"><Dots /></div>;
-  if (!testerOf(s, testerId)) return <div className="page panel"><Empty icon={<Inbox size={20} />} title="No testers yet">Add testers in <Link className="link" href="/settings?tab=people">Settings › People</Link>; each one’s notes and replies appear here.</Empty></div>;
+  if (!testerOf(s, testerId)) return <div className="page panel"><Empty icon={<Inbox size={20} />} title="Nothing sent yet">Run a test script and tell us how it went — every note you send shows up here, with what happened to it. <Link className="link" href="/test">Start testing</Link></Empty></div>;
   return <Notes key={`${s.workspace}:${testerId}`} s={s} testerId={testerId} />;
 }
 

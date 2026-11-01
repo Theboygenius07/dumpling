@@ -9,12 +9,9 @@ next-env.d.ts
 .env.local
 .env.*.local
 
-# local data: the live workspace, voiceover takes, rendered videos
-data/store.json
-data/workspaces/
-data/workspaces.json
-data/*.tmp
-data/voice/
-data/voice-old/
+# local data: accounts, sessions, workspaces, voiceover takes — everything in data/
+# except the demo cycle that ships with the app. Rendered videos too.
+data/*
+!data/seed-cache.json
 video/
 .DS_Store

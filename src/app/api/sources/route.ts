@@ -1,4 +1,5 @@
-import { change, uid, wsOf } from "@/lib/store";
+import { access } from "@/lib/access";
+import { change, uid } from "@/lib/store";
 import { ensureSources, newKey } from "@/lib/sources";
 
 export const dynamic = "force-dynamic";
@@ -7,9 +8,11 @@ type Body = { action?: "create" | "rotate" | "remove"; id?: string; name?: strin
 
 /** This workspace's app connections. Rotating a key cuts off the old one at once. */
 export async function POST(req: Request) {
+  const a = await access(req, "manage");
+  if (a instanceof Response) return a;
   const b = (await req.json().catch(() => null)) as Body | null;
   try {
-    const out = await change(await wsOf(req), (s) => {
+    const out = await change(a.ws, (s) => {
       const list = ensureSources(s);
       if (b?.action === "create") {
         const name = b.name?.trim().slice(0, 60);

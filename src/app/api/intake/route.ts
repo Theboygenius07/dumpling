@@ -1,4 +1,4 @@
-import { change, findWorkspace, now, uid } from "@/lib/store";
+import { change, now, uid, workspaceByKey } from "@/lib/store";
 import { envFrom, hash } from "@/lib/sources";
 import { ack, triage } from "@/lib/triage";
 import type { Feedback, Verdict } from "@/lib/types";
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const text = b?.text?.toString().trim().slice(0, 4000) ?? "";
   if (text.length < 2) return Response.json({ message: "Say what happened, in a few words." }, { status: 400, headers: CORS });
   // The key alone says which workspace this belongs to.
-  const ws = key ? await findWorkspace((s) => (s.sources ?? []).some((x) => x.key === key)) : null;
+  const ws = await workspaceByKey(key);
   if (!ws) return Response.json({ message: "That key isn’t connected to Dumpling." }, { status: 401, headers: CORS });
   try {
     const out = await change(ws, async (s) => {

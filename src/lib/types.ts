@@ -3,7 +3,7 @@
 
 export type Env = { browser: string; os: string; device: string };
 
-export type Tester = { id: string; name: string; env: Env };
+export type Tester = { id: string; name: string; env: Env; userId?: string };
 
 export type Step = { id: string; n: number; action: string; expected: string };
 

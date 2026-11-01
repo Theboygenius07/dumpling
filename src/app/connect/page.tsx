@@ -18,12 +18,13 @@ function Code({ text, children }: { text: string; children: React.ReactNode }) {
 
 export default function ConnectPage() {
   const { s, refresh, toast } = useStore();
-  const [origin, setOrigin] = useState("http://localhost:4100");
+  const [origin, setOrigin] = useState(process.env.NEXT_PUBLIC_DUMPLING_URL ?? "");
   const [busy, setBusy] = useState(false);
   const [sel, setSel] = useState<string | null>(null);
   const [shown, setShown] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
-  useEffect(() => setOrigin(location.origin), []);
+  // The address apps should call: the public one when set (the deployed site), else this page's own.
+  useEffect(() => setOrigin(process.env.NEXT_PUBLIC_DUMPLING_URL || location.origin), []);
 
   const keyed = (s?.sources ?? []).filter((x) => x.kind !== "chalk");
   const web = keyed.find((x) => x.id === sel) ?? keyed.find((x) => x.kind === "widget") ?? keyed[0];

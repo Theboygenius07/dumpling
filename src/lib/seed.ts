@@ -116,7 +116,7 @@ export function seed(): Store {
       product: "chalk",
       productAbout: "an AI teaching whiteboard",
       ticketPrefix: "CH",
-      productUrl: "http://localhost:3000",
+      productUrl: "https://www.trychalk.tech",
       startedAt: at(60 * 26),
       endsAt: new Date(Date.now() + 2 * 86_400_000).toISOString(),
     },

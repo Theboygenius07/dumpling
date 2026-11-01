@@ -1,4 +1,5 @@
-import { change, uid, wsOf } from "@/lib/store";
+import { access } from "@/lib/access";
+import { change, uid } from "@/lib/store";
 import type { Script } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -7,10 +8,12 @@ type In = { id?: string; title?: string; area?: string; steps?: { id?: string; a
 
 /** Replace this workspace's test scripts. A step a tester has already reported on can't be deleted. */
 export async function POST(req: Request) {
+  const a = await access(req, "manage");
+  if (a instanceof Response) return a;
   const b = (await req.json().catch(() => null)) as { scripts?: In[] } | null;
   if (!Array.isArray(b?.scripts)) return Response.json({ message: "Send the scripts." }, { status: 400 });
   try {
-    const scripts = await change(await wsOf(req), (s) => {
+    const scripts = await change(a.ws, (s) => {
       const next: Script[] = b.scripts!.map((x) => {
         const title = x.title?.trim().slice(0, 80);
         if (!title) throw new Error("Every script needs a title.");

@@ -2,7 +2,7 @@
   "name": "dumpling",
   "private": true,
   "version": "0.1.0",
-  "description": "UAT feedback, neatly folded. Testers write in their own words; Dumpling groups duplicates, drafts tickets and asks kind questions \u2014 and a person decides every step.",
+  "description": "UAT feedback, neatly folded. Testers write in their own words; Dumpling groups duplicates, drafts tickets and asks kind questions — and a person decides every step.",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=20"
@@ -17,11 +17,14 @@
     "lucide-react": "^0.546.0",
     "next": "16.2.11",
     "openai": "^6.48.0",
+    "pg": "^8.13.1",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.2.17",
     "@types/node": "^22",
+    "@types/pg": "^8.11.10",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "typescript": "^5"
