@@ -64,7 +64,7 @@ function stages(f: Feedback) {
   const decided = !!outcome[f.status];
   return [
     { label: "Sent", sub: "Received", state: "done" },
-    { label: "Understood", sub: f.analysis ? "Heard read it" : "Reading…", state: f.analysis ? "done" : "now" },
+    { label: "Understood", sub: f.analysis ? "Dumpling read it" : "Reading…", state: f.analysis ? "done" : "now" },
     { label: "Reviewed", sub: f.status === "asked" ? "Question for you" : decided ? "By a person" : "Waiting for a person", state: decided ? "done" : "now" },
     { label: decided ? outcome[f.status]! : "Outcome", sub: decided ? "Decided" : "Not decided yet", state: decided ? "done" : "todo" },
   ];
@@ -131,7 +131,7 @@ function Note({ s, f }: { s: State; f: Feedback }) {
             return (
               <div key={m.id} className={`msg ${m.from}`}>
                 {m.from === "heard" ? <span className="hmark" style={{ width: 22, height: 22 }}><HeardMark size={13} /></span> : <Avatar t={{ name: manager }} size="sm" />}
-                <div><div className="who"><b>{m.from === "heard" ? "Heard" : manager}</b>{m.from === "manager" ? " · UAT manager" : ""} · {ago(m.at)}</div><div className="bubble">{m.text}</div></div>
+                <div><div className="who"><b>{m.from === "heard" ? "Dumpling" : manager}</b>{m.from === "manager" ? " · UAT manager" : ""} · {ago(m.at)}</div><div className="bubble">{m.text}</div></div>
               </div>
             );
           })}

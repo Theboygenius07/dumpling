@@ -24,7 +24,7 @@ export default function ConnectPage() {
 
   const web = s?.sources?.find((x) => x.kind === "widget");
   const webKey = web?.key;
-  // The live preview runs the real widget, pointed at this Heard, inside the frame below.
+  // The live preview runs the real widget, pointed at this Dumpling, inside the frame below.
   useEffect(() => {
     if (!webKey || document.querySelector("script[data-heard-preview]")) return;
     const el = document.createElement("script");
@@ -98,7 +98,7 @@ export default function ConnectPage() {
           <Code text={curl}>
             <span className="k">curl</span> -X POST {origin}/api/intake \{"\n"}  -H <span className="s">&quot;Authorization: Bearer {key}&quot;</span> \{"\n"}  -H <span className="s">&quot;Content-Type: application/json&quot;</span> \{"\n"}  -d <span className="s">&apos;{`{"text": "The share link asks my friend to sign in", "kind": "problem", "name": "Ada", "page": "/board/123"}`}&apos;</span>
           </Code>
-          <p className="small muted">Every note gets the same treatment as a tester’s: Heard says back what it heard, matches it to known problems, and nothing becomes a ticket until a person approves it.</p>
+          <p className="small muted">Every note gets the same treatment as a tester’s: Dumpling says back what it heard, matches it to known problems, and nothing becomes a ticket until a person approves it.</p>
         </div>
 
         <div className="stack">

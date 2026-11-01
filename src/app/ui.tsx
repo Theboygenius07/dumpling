@@ -94,7 +94,7 @@ export const SEV: Record<Severity, { label: string; tone: string; say: string }>
   cosmetic: { label: "Cosmetic", tone: "ghost", say: "Looks wrong, works" },
 };
 
-/** How sure Heard is that two notes are one problem — words first, number second. */
+/** How sure Dumpling is that two notes are one problem — words first, number second. */
 export function linkLabel(l: Link) {
   if (l.human === "same") return { text: "You said: same problem", tone: "ink" };
   if (l.human === "different") return { text: "You said: different", tone: "ink" };
@@ -161,12 +161,12 @@ export function Dots() {
   return <span className="dots" aria-label="Thinking"><i /><i /><i /></span>;
 }
 
-/** Heard's mark: three notes converging into one point — many reports, one problem. */
+/** The mark: a dumpling whose pleats all fold into one point — many notes, one problem. */
 export function HeardMark({ size = 22 }: { size?: number }) {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round">
-      <path d="M3.5 5.5c5.5 0 6.5 6.5 11 6.5M3.5 12h11M3.5 18.5c5.5 0 6.5-6.5 11-6.5" />
-      <circle cx="18.7" cy="12" r="2.5" fill="currentColor" stroke="none" />
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 5.2c-5.3 0-9 4.6-9 8.9 0 2.6 2 4.6 4.6 4.6h8.8c2.6 0 4.6-2 4.6-4.6 0-4.3-3.7-8.9-9-8.9z" />
+      <path d="M12 5.2c-1 2.6-2.9 4.6-5.6 5.6M12 5.2v6M12 5.2c1 2.6 2.9 4.6 5.6 5.6" />
     </svg>
   );
 }

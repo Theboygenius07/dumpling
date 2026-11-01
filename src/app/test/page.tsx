@@ -218,7 +218,7 @@ function Composer({ s, testerId, scriptId, step, verdict, onSent }: { s: State; 
       <div className="coach" aria-live="polite">
         <div className="coach-head">
           <span className="hmark"><HeardMark size={14} /></span>
-          Heard
+          Dumpling
           <span className="spacer" />
           {thinking && <Dots />}
         </div>

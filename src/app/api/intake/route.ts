@@ -46,7 +46,7 @@ export async function POST(req: Request) {
       src.lastAt = f.at;
       return f;
     });
-    if (!out) return Response.json({ message: "That key isn’t connected to Heard." }, { status: 401, headers: CORS });
+    if (!out) return Response.json({ message: "That key isn’t connected to Dumpling." }, { status: 401, headers: CORS });
     return Response.json({ ok: true, id: out.id, message: "Thanks — a person on the team reads every note." }, { headers: CORS });
   } catch (e) {
     console.error("[heard] intake failed:", e);

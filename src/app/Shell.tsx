@@ -19,6 +19,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const role = roleOf(path);
   const { s, testerId } = useStore();
+  // The voiceover recorder is a full-screen tool, not part of the product.
+  if (path.startsWith("/voice")) return <>{children}</>;
 
   const mine = s?.feedback.filter((f) => f.testerId === testerId) ?? [];
   const questions = mine.filter((f) => f.messages.some((m) => m.question && !m.answered && m.from === "manager")).length;
@@ -49,7 +51,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="app">
       <aside className="side">
-        <Link href="/insights" className="ws"><span className="ws-mark"><HeardMark size={15} /></span>Heard</Link>
+        <Link href="/insights" className="ws"><span className="ws-mark"><HeardMark size={15} /></span>Dumpling</Link>
         {s && (
           <Link href="/settings" className="cyc" title="Workspace settings">
             <span className="ws-prod">{s.cycle.product.slice(0, 1).toUpperCase()}</span>
@@ -74,7 +76,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </aside>
       <div className="main">
         <header className="ph">
-          <span className="crumb">{here?.icon}{here?.label ?? "Heard"}</span>
+          <span className="crumb">{here?.icon}{here?.label ?? "Dumpling"}</span>
           <span className="spacer" />
           <Viewing role={role} />
         </header>

@@ -4,7 +4,7 @@ import type { Analysis, Feedback, Kind, Script, Severity, Step, Tester, TicketDr
 const MODEL = process.env.OPENAI_MODEL || "gpt-5.6-luna";
 const EMBED = "text-embedding-3-small";
 
-// The product under test comes from the workspace, not from this file: Heard
+// The product under test comes from the workspace, not from this file: Dumpling
 // works for any product, and chalk is just the first workspace.
 let PRODUCT = { name: "the product", about: "" };
 export function setProduct(p: { product: string; productAbout?: string }) {

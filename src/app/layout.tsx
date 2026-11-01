@@ -4,7 +4,7 @@ import { Shell } from "./Shell";
 import { StoreProvider } from "./ui";
 
 export const metadata: Metadata = {
-  title: "Heard — UAT, untangled",
+  title: "Dumpling — UAT feedback, neatly folded",
   description: "Feedback that is easy to give and easy to act on, with a person deciding every step.",
 };
 

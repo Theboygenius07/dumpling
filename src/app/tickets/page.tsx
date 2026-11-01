@@ -65,7 +65,7 @@ function markdown(s: State, t: Ticket) {
     "",
     t.notes ? `**Notes:** ${t.notes}` : "",
     "",
-    `_From UAT (${s.cycle.name}). Drafted by Heard, approved by ${t.approvedBy}${t.edited.length ? `, who edited: ${t.edited.join(", ")}` : ""}._`,
+    `_From UAT (${s.cycle.name}). Drafted by Dumpling, approved by ${t.approvedBy}${t.edited.length ? `, who edited: ${t.edited.join(", ")}` : ""}._`,
   ].join("\n");
 }
 
@@ -114,7 +114,7 @@ function Issue({ s, t }: { s: State; t: Ticket }) {
             })}
             <div className="act-row">
               <span className="hmark" style={{ width: 26, height: 26, borderRadius: "50%" }}><Sparkles size={13} /></span>
-              <div className="small" style={{ paddingTop: 4 }}><b style={{ fontWeight: 500 }}>Heard</b> <span className="muted">drafted this ticket from {w.length} {w.length === 1 ? "report" : "reports"}</span></div>
+              <div className="small" style={{ paddingTop: 4 }}><b style={{ fontWeight: 500 }}>Dumpling</b> <span className="muted">drafted this ticket from {w.length} {w.length === 1 ? "report" : "reports"}</span></div>
             </div>
             <div className="act-row">
               <Avatar t={{ name: manager }} />
@@ -133,7 +133,7 @@ function Issue({ s, t }: { s: State; t: Ticket }) {
         {step?.script && <div className="prop" style={{ alignItems: "start" }}><span>Found in</span><span className="small">{step.label}</span></div>}
         <div className="hr" style={{ margin: "8px 0" }} />
         <div className="prop"><span>Approved by</span><span className="row"><Avatar t={{ name: manager }} size="sm" />{manager}</span></div>
-        <div className="prop"><span>Drafted by</span><span className="row"><Sparkles size={13} color="var(--accent)" />Heard</span></div>
+        <div className="prop"><span>Drafted by</span><span className="row"><Sparkles size={13} color="var(--accent)" />Dumpling</span></div>
       </aside>
     </div>
   );

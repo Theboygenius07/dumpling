@@ -1,20 +1,20 @@
-# Heard — UAT, untangled
+# Dumpling — UAT feedback, neatly folded
 
-**Five reports of one bug aren't noise. They're five witnesses.**
+**Five reports of one bug aren't noise. They're five witnesses — folded into one ticket, like a dumpling.**
 
-Heard is a UAT feedback tool that follows one bug all the way through: from the tester who hits it, to the UAT manager who decides on it, to the developer who fixes it, and back to the tester, who hears what happened. The AI reads, groups and drafts. A person makes every decision.
+Dumpling is a UAT feedback tool that follows one bug all the way through: from the tester who hits it, to the UAT manager who decides on it, to the developer who fixes it, and back to the tester, who hears what happened. The AI reads, groups and drafts. A person makes every decision.
 
-The test cycle in this prototype is a real one: the beta of **chalk** (trychalk.tech), an AI teaching whiteboard. Its test scripts use chalk's real flows and labels ("Draw it", "Plan my course", "Record"), and Heard can import reports from chalk's own **Report a problem** button.
+The test cycle in this prototype is a real one: the beta of **chalk** (trychalk.tech), an AI teaching whiteboard. Its test scripts use chalk's real flows and labels ("Draw it", "Plan my course", "Record"), and Dumpling can import reports from chalk's own **Report a problem** button.
 
 ## The moments it connects
 
-| Moment | Who | What Heard does |
+| Moment | Who | What Dumpling does |
 |---|---|---|
-| **During** | Tester | Runs scripted steps. When something goes wrong they write in their own words, with no form to fill in. While they type, Heard says back what it understood, says whether someone already reported it ("4 reports · 97% alike · same step"), and asks **one optional question** when the note is thin. Browser, device and step are attached automatically. |
+| **During** | Tester | Runs scripted steps. When something goes wrong they write in their own words, with no form to fill in. While they type, Dumpling says back what it understood, says whether someone already reported it ("4 reports · 97% alike · same step"), and asks **one optional question** when the note is thin. Browser, device and step are attached automatically. |
 | **After** | UAT manager | A queue that you work **one item at a time**. Notes that describe the same problem are grouped, each with its confidence and its reasons both ways ("+ both stalled at step 3 · – Esme saw a WebSocket error, Bayo didn't"). Doubtful matches sit outside the group as "Not sure — your call". Thin notes get "Ask Chen a question", never "rejected". |
 | **Handover** | Developer | One ticket instead of six duplicates: reproduction steps from the script, expected and actual, every witness with their setup and exact words, what each one added, and who approved it and what they edited. You can copy it straight into GitHub or Jira. |
 | **Back** | Tester | "My notes" shows where every note went: became ticket CH-101 (with the detail they added credited), filed in the ideas backlog (with how many others asked), answered, or a question waiting for them. |
-| **Across the cycle** | Everyone | Where the cycle hurts (failures per script step), how many notes folded into how many problems, whether every tester got a reply from a person, and **how often the manager agreed with Heard**. Every overrule is kept. |
+| **Across the cycle** | Everyone | Where the cycle hurts (failures per script step), how many notes folded into how many problems, whether every tester got a reply from a person, and **how often the manager agreed with Dumpling**. Every overrule is kept. |
 
 ## Connect your app
 
@@ -33,9 +33,9 @@ The demo key is fixed (`HEARD_KEY` overrides it) so that a reset doesn't break a
 
 - **No batch approve.** `/api/decide` takes exactly one action on one target. If you send it a list, it refuses ("One decision at a time.").
 - **No auto-creation.** Nothing in the triage pipeline creates a ticket, closes a note, or messages a tester beyond the honest acknowledgement "a person reads every note". Tickets exist only through `create-ticket`, which a person presses.
-- **Every judgement is overrulable in one click.** Take a note out of a group, add one Heard wasn't sure about, change bug ↔ idea ↔ question, or change the severity. A person's call on a pair outlives any later re-reading by the model.
+- **Every judgement is overrulable in one click.** Take a note out of a group, add one Dumpling wasn't sure about, change bug ↔ idea ↔ question, or change the severity. A person's call on a pair outlives any later re-reading by the model.
 - **Uncertainty is shown honestly.** The number shown always agrees with the words shown: a "different" can never carry 90%. Confident matches start folded, and doubtful ones start open, because that is where a person is needed.
-- **Thin evidence gets a kinder answer.** It's labelled "Needs a little more", never "rejected", and the next step is a five-second question with one-tap answers, which Heard drafts and the manager sends.
+- **Thin evidence gets a kinder answer.** It's labelled "Needs a little more", never "rejected", and the next step is a five-second question with one-tap answers, which Dumpling drafts and the manager sends.
 
 ## How it works
 

@@ -1,7 +1,7 @@
 import type { Source, Store, Tester } from "./types";
 
 // A prototype runs on one Mac, so the demo key is fixed: a reset must not
-// break a widget already pasted into chalk. A hosted Heard issues one per source.
+// break a widget already pasted into chalk. A hosted Dumpling issues one per source.
 export const DEMO_KEY = process.env.HEARD_KEY || "hrd_chalk_demo_4f9a2c";
 
 export function ensureSources(s: Store) {

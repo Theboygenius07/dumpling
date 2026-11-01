@@ -149,7 +149,7 @@ export async function decide(s: Store, a: Action): Promise<string> {
       const was = f.analysis.kind;
       if (was === a.kind) return f.groupId ?? f.id;
       f.analysis.kind = a.kind;
-      f.analysis.kindWhy = `${s.manager.split(" ")[0]} changed this to “${a.kind}” — Heard had read it as “${was}”.`;
+      f.analysis.kindWhy = `${s.manager.split(" ")[0]} changed this to “${a.kind}” — Dumpling had read it as “${was}”.`;
       await relink(s, f);
       await place(s, f);
       stamp(s, { action: "set-kind", target: f.id, aiSaid: was, humanSaid: a.kind, overruled: true });

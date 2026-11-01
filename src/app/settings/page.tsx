@@ -20,7 +20,7 @@ export default function SettingsPage() {
       <div className="head">
         <div>
           <h1>Workspace settings</h1>
-          <p>Heard works with any product. This tells it what it’s testing — the AI reads every note with this in mind — and how tickets are numbered.</p>
+          <p>Dumpling works with any product. This tells it what it’s testing — the AI reads every note with this in mind — and how tickets are numbered.</p>
         </div>
       </div>
       <div className="panel pad stack-16">
@@ -32,7 +32,7 @@ export default function SettingsPage() {
         <label className="field"><span className="label">Where testers open it</span><input className="input" value={f.productUrl} onChange={set("productUrl")} /></label>
         <label className="field"><span className="label">Test cycle</span><input className="input" value={f.name} onChange={set("name")} /></label>
         <div className="well small" style={{ padding: "10px 12px", color: "var(--text-2)" }}>
-          Heard will read notes as feedback on <b style={{ color: "var(--text)", fontWeight: 500 }}>{f.product || "your product"}{f.productAbout ? `, ${f.productAbout}` : ""}</b>. The next ticket will be <b style={{ color: "var(--text)", fontWeight: 500 }}>{prefix}-{s.nextTicket}</b>.
+          Dumpling will read notes as feedback on <b style={{ color: "var(--text)", fontWeight: 500 }}>{f.product || "your product"}{f.productAbout ? `, ${f.productAbout}` : ""}</b>. The next ticket will be <b style={{ color: "var(--text)", fontWeight: 500 }}>{prefix}-{s.nextTicket}</b>.
         </div>
         <div className="row" style={{ justifyContent: "flex-end" }}>
           <button className="btn primary" disabled={busy || !f.product.trim()} onClick={async () => {

@@ -5,3 +5,4 @@ data/store.json
 next-env.d.ts
 *.tsbuildinfo
 video/
+data/voice/

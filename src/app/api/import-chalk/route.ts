@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 // chalk's own "Report a problem" (src/app/api/support) writes one JSON line per
-// report to .data/support.jsonl on a Mac without accounts. Heard reads that log
+// report to .data/support.jsonl on a Mac without accounts. Dumpling reads that log
 // so reports from real use land in the same review queue as scripted testing.
 const FIELD = "t_field";
 

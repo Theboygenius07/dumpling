@@ -2,7 +2,7 @@ import { change } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
-/** The workspace's product: what Heard tells the model it is testing, and how tickets are numbered. */
+/** The workspace's product: what Dumpling tells the model it is testing, and how tickets are numbered. */
 export async function POST(req: Request) {
   const b = (await req.json().catch(() => null)) as { product?: string; productAbout?: string; ticketPrefix?: string; productUrl?: string; name?: string } | null;
   const product = b?.product?.trim().slice(0, 40) ?? "";

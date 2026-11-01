@@ -127,11 +127,11 @@ function Case({ s, item, n, total, go, act }: { s: State; item: Item; n: number;
   );
 }
 
-/** Heard's read of the case in one slim line; the reasoning sits behind each part. */
+/** Dumpling's read of the case in one slim line; the reasoning sits behind each part. */
 function Read({ parts }: { parts: { icon: React.ReactNode; text: React.ReactNode; why: string }[] }) {
   return (
     <div className="read">
-      <span className="read-label"><Sparkles size={12} />Heard’s read</span>
+      <span className="read-label"><Sparkles size={12} />Dumpling’s read</span>
       {parts.map((p, i) => <span key={i} className="read-part" title={p.why}>{p.icon}{p.text}</span>)}
     </div>
   );
@@ -167,7 +167,7 @@ function GroupCase({ s, g, members, family, act }: { s: State; g: Group; members
       ) : (
         <Read parts={[
           { icon: <Lightbulb size={13} />, text: "A product idea, not a bug", why: "A suggestion to make it better." },
-          { icon: <Plus size={13} />, text: `${testers} ${testers === 1 ? "tester" : "testers"} asked`, why: "Heard gathers similar ideas into one theme." },
+          { icon: <Plus size={13} />, text: `${testers} ${testers === 1 ? "tester" : "testers"} asked`, why: "Dumpling gathers similar ideas into one theme." },
         ]} />
       )}
 
@@ -251,7 +251,7 @@ function Report({ s, f, g, first: isFirst, act }: { s: State; f: Feedback; g: Gr
           {g.memberIds.length > 1 && f.status !== "ticketed" && (
             <button className="btn ghost sm" title="Take this report out of the group" onClick={() => act({ action: "split", feedbackId: f.id }, `${name}’s note is now its own case.`, false)}><Split size={13} />Not the same</button>
           )}
-          {/* App users have no inbox in Heard, so there is no one to ask. */}
+          {/* App users have no inbox in Dumpling, so there is no one to ask. */}
           {f.status === "new" && f.source === "tester" && <button className="btn ghost sm" onClick={() => setAsking(!asking)}><MessageCircleQuestion size={13} />Ask {name}</button>}
           <KindSwitch f={f} act={act} />
         </span>
@@ -304,7 +304,7 @@ function KindSwitch({ f, act }: { f: Feedback; act: Act }) {
   const k = f.analysis?.kind;
   if (!k || f.status === "ticketed") return null;
   return (
-    <label className="btn ghost sm" style={{ position: "relative" }} title={`Heard read this as ${KIND[k].toLowerCase()} (${sureWords(f.analysis!.kindConfidence).toLowerCase()})`}>
+    <label className="btn ghost sm" style={{ position: "relative" }} title={`Dumpling read this as ${KIND[k].toLowerCase()} (${sureWords(f.analysis!.kindConfidence).toLowerCase()})`}>
       {KIND[k]}
       <ChevronDown size={12} />
       <select aria-label="Change what this is" value="" style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
@@ -328,7 +328,7 @@ function AskBox({ s, f, act, onDone }: { s: State; f: Feedback; act: Act; onDone
   }, []);
   return (
     <div className="why-panel stack" style={{ marginTop: 10 }}>
-      <div className="row"><MessageCircleQuestion size={14} /><b style={{ fontWeight: 500, fontSize: 13 }}>A kind question for {name}</b><span className="spacer" /><span className="small muted">Drafted by Heard — edit freely</span></div>
+      <div className="row"><MessageCircleQuestion size={14} /><b style={{ fontWeight: 500, fontSize: 13 }}>A kind question for {name}</b><span className="spacer" /><span className="small muted">Drafted by Dumpling — edit freely</span></div>
       <textarea className="textarea" style={{ minHeight: 60 }} value={busy ? "Drafting…" : text} onChange={(e) => setText(e.target.value)} />
       <input className="input" value={options.join("  ·  ")} onChange={(e) => setOptions(e.target.value.split("·").map((x) => x.trim()))} aria-label="One-tap answers" title="One-tap answers they can pick" />
       <div className="row">
@@ -372,19 +372,19 @@ function TicketPanel({ s, g, members, act }: { s: State; g: Group; members: Feed
   return (
     <>
       <div className="decide-body stack-16">
-        <div className="row between"><span className="label">New ticket · {next}</span><span className="small muted row" style={{ gap: 5 }}><Sparkles size={12} />Drafted by Heard</span></div>
+        <div className="row between"><span className="label">New ticket · {next}</span><span className="small muted row" style={{ gap: 5 }}><Sparkles size={12} />Drafted by Dumpling</span></div>
         {thin && (
           <div className="ask small">
-            <b style={{ fontWeight: 500 }}>Not enough to act on yet.</b> That isn’t a no — {asked ? "a question is with the tester." : "ask one question first; Heard will read the answer into this draft."}
+            <b style={{ fontWeight: 500 }}>Not enough to act on yet.</b> That isn’t a no — {asked ? "a question is with the tester." : "ask one question first; Dumpling will read the answer into this draft."}
           </div>
         )}
         <textarea className="title-input" rows={2} value={d.title} onChange={(e) => set("title", e.target.value)} aria-label="Title" />
         <div className="field">
-          <span className="label">Severity {changed("severity") && <span className="edited">You overruled Heard</span>}</span>
+          <span className="label">Severity {changed("severity") && <span className="edited">You overruled Dumpling</span>}</span>
           <div className="seg" role="radiogroup" aria-label="Severity" style={{ marginTop: 8 }}>
             {(["blocker", "major", "minor", "cosmetic"] as Severity[]).map((x) => (
               <button key={x} role="radio" aria-checked={d.severity === x} className={d.severity === x ? "on" : ""} onClick={() => set("severity", x)}>
-                {x}{draft.severity === x && <span className="ai">Heard</span>}
+                {x}{draft.severity === x && <span className="ai">Dumpling</span>}
               </button>
             ))}
           </div>
@@ -436,7 +436,7 @@ function IdeaPanel({ s, g, members, act }: { s: State; g: Group; members: Feedba
   return (
     <>
       <div className="decide-body stack">
-        <div className="row between"><span className="label">Ideas backlog</span><span className="small muted row" style={{ gap: 5 }}><Sparkles size={12} />Drafted by Heard</span></div>
+        <div className="row between"><span className="label">Ideas backlog</span><span className="small muted row" style={{ gap: 5 }}><Sparkles size={12} />Drafted by Dumpling</span></div>
         <p className="small muted">Not a ticket — it joins a theme the product team plans from, and everyone who asked is told.</p>
         <label className="field"><span className="label">Message to {who}</span>
           <textarea className="textarea" style={{ minHeight: 120 }} value={loading ? "Drafting…" : text} onChange={(e) => setText(e.target.value)} />

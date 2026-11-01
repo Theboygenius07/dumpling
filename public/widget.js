@@ -1,6 +1,6 @@
-/* Heard feedback widget — one script tag, no dependencies.
+/* Dumpling feedback widget — one script tag, no dependencies.
  *   <script src="https://YOUR-HEARD/widget.js" data-key="hrd_…" data-app="chalk" async></script>
- * Adds a Feedback button. Sends the person's own words to Heard, with the page,
+ * Adds a Feedback button. Sends the person's own words to Dumpling, with the page,
  * their browser and any recent errors attached so they never have to type them.
  * Optional: data-target="#el" mounts it inside an element instead of the page corner. */
 (function () {
@@ -49,7 +49,7 @@
     '.brand{margin-top:10px;font-size:11px;color:#a3a5ad;text-align:right}' +
     '</style>' +
     '<div class="wrap"><div class="card" hidden></div><button class="fab" type="button" aria-haspopup="dialog">' +
-    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M3.5 5.5c5.5 0 6.5 6.5 11 6.5M3.5 12h11M3.5 18.5c5.5 0 6.5-6.5 11-6.5"/><circle cx="18.7" cy="12" r="2.5" fill="currentColor" stroke="none"/></svg>Feedback</button></div>';
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.2c-5.3 0-9 4.6-9 8.9 0 2.6 2 4.6 4.6 4.6h8.8c2.6 0 4.6-2 4.6-4.6 0-4.3-3.7-8.9-9-8.9z"/><path d="M12 5.2c-1 2.6-2.9 4.6-5.6 5.6M12 5.2v6M12 5.2c1 2.6 2.9 4.6 5.6 5.6"/></svg>Feedback</button></div>';
 
   var card = root.querySelector(".card");
   var fab = root.querySelector(".fab");
@@ -67,7 +67,7 @@
       '<textarea placeholder="What happened? Your own words are perfect."></textarea>' +
       '<input placeholder="Your name (optional)">' +
       '<div class="foot"><span class="att">Attached for you: this page, your browser' + (n ? ", " + n + " recent error" + (n > 1 ? "s" : "") : "") + '</span><button class="send" disabled>Send</button></div>' +
-      '<div class="err" hidden></div><div class="brand">Read by a person · Heard</div>';
+      '<div class="err" hidden></div><div class="brand">Read by a person · Dumpling</div>';
     var ta = card.querySelector("textarea"), name = card.querySelector("input"), send = card.querySelector(".send"), err = card.querySelector(".err");
     card.querySelector(".x").onclick = close;
     card.querySelectorAll(".seg button").forEach(function (b) {
@@ -94,5 +94,5 @@
   function open() { kind = "problem"; form(); card.hidden = false; fab.setAttribute("aria-expanded", "true"); }
   function close() { card.hidden = true; fab.setAttribute("aria-expanded", "false"); }
   fab.onclick = function () { card.hidden ? open() : close(); };
-  window.Heard = { open: open, close: close };
+  window.Dumpling = { open: open, close: close };
 })();

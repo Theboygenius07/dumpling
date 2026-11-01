@@ -2,7 +2,7 @@ import { analyze, compare, contextFor, cosine, embed, overlap, reportText, theme
 import { now, uid } from "./store";
 import type { Feedback, Group, Kind, Link, Store } from "./types";
 
-// Heard proposes; people decide. Nothing in this file creates a ticket, closes
+// Dumpling proposes; people decide. Nothing in this file creates a ticket, closes
 // feedback or sends a tester anything but an acknowledgement.
 
 const family = (k: Kind | undefined) => (k === "bug" || k === "unclear" ? "bug" : k === "idea" ? "idea" : null);

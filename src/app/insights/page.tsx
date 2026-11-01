@@ -57,7 +57,7 @@ export default function InsightsPage() {
         <div>
           <div className="eyebrow">Testing {s.cycle.product}</div>
           <h1 style={{ marginTop: 6 }}>{s.cycle.name}</h1>
-          <p>Testers say what went wrong in their own words. Heard turns it into one case per problem and shows its working. A person decides every step, and every tester hears back.</p>
+          <p>Testers say what went wrong in their own words. Dumpling turns it into one case per problem and shows its working. A person decides every step, and every tester hears back.</p>
         </div>
         <div className="row">
           <button className="btn ghost" disabled={!!busy} onClick={() => run("reset")}>{busy === "reset" ? <Dots /> : <RotateCcw size={15} />}Reset demo</button>
@@ -68,7 +68,7 @@ export default function InsightsPage() {
         <div className="kpi"><div className="label">Notes from testers</div><div className="v">{notes.length}</div><div className="d">from {new Set(notes.map((f) => f.testerId)).size} testers, in their own words</div></div>
         <div className="kpi"><div className="label">Distinct problems</div><div className="v">{problems}</div><div className="d">{bugNotes.length} bug notes folded into {problems} — duplicates became witnesses</div></div>
         <div className="kpi"><div className="label">Tickets</div><div className="v">{s.tickets.length}</div><div className="d">each approved by a person, one at a time</div></div>
-        <div className="kpi"><div className="label">Heard back from a person</div><div className="v">{replied}<small>/{notes.length}</small></div><div className="d">{waiting} notes still waiting for a decision</div></div>
+        <div className="kpi"><div className="label">Dumpling back from a person</div><div className="v">{replied}<small>/{notes.length}</small></div><div className="d">{waiting} notes still waiting for a decision</div></div>
       </div>
 
       <div className="grid-2">
@@ -99,7 +99,7 @@ export default function InsightsPage() {
         </div>
 
         <div className="panel pad">
-          <div className="row between"><h3>Is Heard’s judgement any good?</h3></div>
+          <div className="row between"><h3>Is Dumpling’s judgement any good?</h3></div>
           {judged.length ? (
             <>
               <div className="row" style={{ alignItems: "baseline", gap: 10, marginTop: 14 }}>
@@ -110,15 +110,15 @@ export default function InsightsPage() {
                 {overruled.slice(-4).reverse().map((d) => (
                   <div key={d.id} className="well small" style={{ padding: "10px 12px" }}>
                     <span className="pill warn" style={{ height: 20, marginRight: 8 }}>Overruled</span>
-                    Heard said <b style={{ fontWeight: 500 }}>{d.aiSaid}</b> → {d.by.split(" (")[0]} said <b style={{ fontWeight: 500 }}>{d.humanSaid}</b>
+                    Dumpling said <b style={{ fontWeight: 500 }}>{d.aiSaid}</b> → {d.by.split(" (")[0]} said <b style={{ fontWeight: 500 }}>{d.humanSaid}</b>
                   </div>
                 ))}
               </div>
             </>
           ) : (
-            <p className="muted small" style={{ marginTop: 12 }}>No decisions yet. Each time the manager agrees with or overrules Heard it’s counted here — so trust in the tool is earned, not assumed. <Link className="link" href="/review">Start reviewing</Link></p>
+            <p className="muted small" style={{ marginTop: 12 }}>No decisions yet. Each time the manager agrees with or overrules Dumpling it’s counted here — so trust in the tool is earned, not assumed. <Link className="link" href="/review">Start reviewing</Link></p>
           )}
-          <p className="small muted" style={{ marginTop: 14 }}>Every overrule is kept. It shows the team where to trust Heard, and where not to.</p>
+          <p className="small muted" style={{ marginTop: 14 }}>Every overrule is kept. It shows the team where to trust Dumpling, and where not to.</p>
           <div className="hr" style={{ margin: "18px 0" }} />
           <h3>Bug notes by browser</h3>
           <div className="stack-6" style={{ marginTop: 12 }}>

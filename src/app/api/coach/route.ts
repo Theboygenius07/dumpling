@@ -5,7 +5,7 @@ import type { Verdict } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-// Runs while the tester types: what Heard understood, whether it is thin, and
+// Runs while the tester types: what Dumpling understood, whether it is thin, and
 // whether someone already reported it. It never changes anything.
 export async function POST(req: Request) {
   const b = (await req.json().catch(() => null)) as { testerId?: string; scriptId?: string | null; stepId?: string | null; verdict?: Verdict; text?: string } | null;
