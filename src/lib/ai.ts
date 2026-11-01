@@ -70,7 +70,7 @@ Return JSON with exactly these keys:
 - summary: the tester's point restated plainly in one sentence about what happened ("The board never finished drawing after about 3 minutes."). Describe what happened, not the person: avoid "the tester".
 - actual: what happened, in their words where possible ("" if unknown).
 - expected: what should have happened, usually the step's expected result ("" if not a bug).
-- evidence: "strong" (a developer could start), "some" (useful but gaps), or "thin" (nothing to act on yet).
+- evidence: "strong" (a developer could start), "some" (useful but gaps), or "thin" (not enough to start from yet).
 - missing: up to 3 short things a developer would still need (e.g. "how long they waited", "whether the cursor appeared"). [] if none.
 - question: if evidence is thin or some, ONE warm, specific question to the tester that a busy person can answer in five seconds. Never blame, never ask for logs or technical terms. Thank them first in a few words. "" if evidence is strong or kind is praise.
 - options: 2-4 one-tap answers to that question ([] if no question).

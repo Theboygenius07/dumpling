@@ -10,11 +10,11 @@ Dumpling works with any product. The demo workspace is **chalk**, an AI teaching
 
 ## Why
 
-User acceptance testing is the last checkpoint before something ships, and its feedback is messy:
+User acceptance testing is where a product meets the people who will use it, and what they say is hard to work with:
 
-- **The same bug arrives five ways.** Different testers, different words, five tickets for one fix.
-- **Comments leave nothing to act on.** "Weird." "Doesn't work." A developer can't start from that.
-- **Ideas get lost.** Suggestions sit in spreadsheet cells and nobody plans from them.
+- **One bug, many reports.** Different testers, different words, five tickets for one fix.
+- **Notes too thin to fix from.** "Weird." "Doesn't work." A developer can't start from that.
+- **Ideas get buried.** Suggestions end up in a column nobody plans from.
 - **Testers never hear back.** They gave their time and don't know whether it mattered.
 
 ## How it works

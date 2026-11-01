@@ -2,9 +2,9 @@ import type { Feedback, Script, Store, Tester, Verdict } from "./types";
 
 // The product under test is chalk (trychalk.tech): a real UAT cycle for its
 // beta, written against chalk's real labels ("Draw it", "Plan my course",
-// "Record"). The feedback below is invented, but it is messy the way the
-// brief says real feedback is: one bug arrives five ways, comments leave
-// nothing to act on, ideas get lost among bugs.
+// "Record"). The feedback below is invented, but it is messy the way
+// real UAT feedback is: one bug reported several ways, notes too thin
+// to fix from, ideas mixed in with bugs.
 
 export const testers: Tester[] = [
   { id: "t_ada", name: "Ada Okafor", env: { browser: "Chrome 141", os: "macOS 26", device: "MacBook Air" } },
@@ -56,7 +56,7 @@ type Raw = [tester: string, script: string | null, step: string | null, verdict:
 
 // Grouped here for the reader; the tool never sees this grouping.
 const raw: Raw[] = [
-  // One bug, five ways: the board never finishes drawing on Safari.
+  // One bug, many reports: the board never finishes drawing on Safari.
   ["t_bayo", "s_board", "b3", "failed", "Pressed Draw it, the little cursor moved around for ages and nothing ever came up on the board. I waited about 3 minutes then gave up.", 410],
   ["t_femi", "s_board", "b3", "failed", "stuck loading", 380],
   ["t_esme", "s_board", "b3", "failed", "Board never finished. The cursor kept circling and no sections appeared. Console showed “WebSocket closed (1006)” right before it stalled.", 300],
@@ -73,7 +73,7 @@ const raw: Raw[] = [
   ["t_dami", "s_course", "c3", "failed", "Quiz said 0/5 but I'm sure at least 3 were right — when I opened the answers, my picks were marked green.", 140],
   ["t_bayo", "s_record", "r2", "failed", "The notes stop before the end — the last thing I said (about 20 seconds) is missing.", 100],
 
-  // Thin evidence: nothing to act on yet.
+  // Thin evidence: not enough to start from yet.
   ["t_chen", "s_course", "c1", "off", "weird", 170],
   ["t_femi", "s_record", "r1", "failed", "doesn't work", 90],
 

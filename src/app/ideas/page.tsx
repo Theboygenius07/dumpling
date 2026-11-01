@@ -16,7 +16,7 @@ export default function IdeasPage() {
       <div className="head">
         <div>
           <h1>Ideas backlog</h1>
-          <p>Not every note is a bug. Ideas used to sit forgotten in spreadsheet cells — here they’re gathered into themes and counted, and everyone who asked has been told where their idea went.</p>
+          <p>Not every note is a bug. Here ideas are gathered into themes and counted, and everyone who asked has been told where their idea went.</p>
         </div>
       </div>
       {!themes.length ? (

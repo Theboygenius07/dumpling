@@ -5,7 +5,7 @@ import { StoreProvider } from "./ui";
 
 export const metadata: Metadata = {
   title: "Dumpling — UAT feedback, neatly folded",
-  description: "Feedback that is easy to give and easy to act on, with a person deciding every step.",
+  description: "Clear feedback from every tester, with a person deciding every step.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
