@@ -150,7 +150,7 @@ export async function place(s: Store, f: Feedback) {
     return;
   }
   const title = fam === "idea" ? await themeOf([f.text]) : await titleOf([f.analysis?.summary ?? f.text]);
-  const g: Group = { id: uid("g"), title: title ?? f.analysis?.summary ?? f.text, memberIds: [f.id], status: "open", createdBy: "heard", ticketId: null, draft: null };
+  const g: Group = { id: uid("g"), title: title ?? f.analysis?.summary ?? f.text, memberIds: [f.id], status: "open", createdBy: "dumpling", ticketId: null, draft: null };
   s.groups.push(g);
   f.groupId = g.id;
 }
@@ -216,7 +216,7 @@ export function ack(s: Store, f: Feedback) {
   f.messages.unshift({
     id: uid("m"),
     at: f.at,
-    from: "heard",
+    from: "dumpling",
     text: `Thanks, ${first}.${heard} A person reads every note — you’ll see what happens to this one here.`,
   });
 }

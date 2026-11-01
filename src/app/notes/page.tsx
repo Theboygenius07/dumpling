@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Inbox, MessageCircleQuestion, Send } from "lucide-react";
 import type { Feedback } from "@/lib/types";
-import { Avatar, Dots, Empty, HeardMark, NOTE_ICON, NOTE_STATUS, Status, ago, post, stepOf, testerOf, useStore, type State } from "../ui";
+import { Avatar, Dots, Empty, DumplingMark, NOTE_ICON, NOTE_STATUS, Status, ago, post, stepOf, testerOf, useStore, type State } from "../ui";
 
 export default function NotesPage() {
   const { s, testerId } = useStore();
@@ -130,8 +130,8 @@ function Note({ s, f }: { s: State; f: Feedback }) {
             );
             return (
               <div key={m.id} className={`msg ${m.from}`}>
-                {m.from === "heard" ? <span className="hmark" style={{ width: 22, height: 22 }}><HeardMark size={13} /></span> : <Avatar t={{ name: manager }} size="sm" />}
-                <div><div className="who"><b>{m.from === "heard" ? "Dumpling" : manager}</b>{m.from === "manager" ? " · UAT manager" : ""} · {ago(m.at)}</div><div className="bubble">{m.text}</div></div>
+                {m.from === "dumpling" ? <span className="hmark" style={{ width: 22, height: 22 }}><DumplingMark size={13} /></span> : <Avatar t={{ name: manager }} size="sm" />}
+                <div><div className="who"><b>{m.from === "dumpling" ? "Dumpling" : manager}</b>{m.from === "manager" ? " · UAT manager" : ""} · {ago(m.at)}</div><div className="bubble">{m.text}</div></div>
               </div>
             );
           })}

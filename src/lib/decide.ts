@@ -26,7 +26,7 @@ const fb = (s: Store, id: unknown) => {
   if (!f) throw new Refused("That note isn’t here any more.");
   return f;
 };
-const say = (f: Feedback, text: string, from: "manager" | "heard" = "manager", extra: Partial<Feedback["messages"][number]> = {}) =>
+const say = (f: Feedback, text: string, from: "manager" | "dumpling" = "manager", extra: Partial<Feedback["messages"][number]> = {}) =>
   f.messages.push({ id: uid("m"), at: now(), from, text, ...extra });
 
 export async function decide(s: Store, a: Action): Promise<string> {
@@ -193,7 +193,7 @@ export async function testerReplies(s: Store, feedbackId: string, text: string) 
   const g = s.groups.find((x) => x.id === f.groupId);
   const n = g?.memberIds.length ?? 1;
   const matched = n > before || (n > 1 && before === 1) ? ` It looks like what ${n - 1} other ${n - 1 === 1 ? "tester" : "testers"} saw, so your note now backs theirs up.` : "";
-  say(f, `Thanks — that’s exactly what helps.${matched} A person will look at it again.`, "heard");
+  say(f, `Thanks — that’s exactly what helps.${matched} A person will look at it again.`, "dumpling");
   return f.id;
 }
 

@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Mic, Play, Square } from "lucide-react";
-import { HeardMark } from "../ui";
+import { DumplingMark } from "../ui";
 import { SCENES } from "./script";
 
 type Phase = "idle" | "recording" | "saving";
@@ -106,7 +106,7 @@ export default function VoicePage() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--side)", display: "grid", gridTemplateRows: "auto 1fr auto" }}>
       <header className="row" style={{ padding: "16px 24px", gap: 10 }}>
-        <span className="ws-mark" style={{ width: 26, height: 26 }}><HeardMark size={16} /></span>
+        <span className="ws-mark" style={{ width: 26, height: 26 }}><DumplingMark size={16} /></span>
         <b style={{ fontWeight: 600 }}>Record the voiceover</b>
         <span className="spacer" />
         <span className="small muted">{done.size} of {SCENES.length} lines recorded</span>

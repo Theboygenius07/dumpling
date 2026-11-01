@@ -1,5 +1,5 @@
 /* Dumpling feedback widget — one script tag, no dependencies.
- *   <script src="https://YOUR-HEARD/widget.js" data-key="hrd_…" data-app="chalk" async></script>
+ *   <script src="https://YOUR-DUMPLING/widget.js" data-key="dmp_…" data-app="chalk" async></script>
  * Adds a Feedback button. Sends the person's own words to Dumpling, with the page,
  * their browser and any recent errors attached so they never have to type them.
  * Optional: data-target="#el" mounts it inside an element instead of the page corner. */
@@ -17,9 +17,9 @@
 
   var mountAt = (target && document.querySelector(target)) || document.body;
   // One widget per place, even if an app includes the script twice.
-  for (var i = 0; i < mountAt.children.length; i++) if (mountAt.children[i].hasAttribute("data-heard-widget")) return;
+  for (var i = 0; i < mountAt.children.length; i++) if (mountAt.children[i].hasAttribute("data-dumpling-widget")) return;
   var hostEl = document.createElement("div");
-  hostEl.setAttribute("data-heard-widget", "");
+  hostEl.setAttribute("data-dumpling-widget", "");
   hostEl.style.cssText = target ? "position:absolute;inset:0;pointer-events:none;z-index:5" : "position:fixed;inset:auto 20px 20px auto;z-index:2147483000";
   mountAt.appendChild(hostEl);
   var root = hostEl.attachShadow({ mode: "open" });

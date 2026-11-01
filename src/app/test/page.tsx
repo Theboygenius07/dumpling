@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Check, CircleCheck, ExternalLink, Lightbulb, ListChecks, Lock, Monitor, Send, TriangleAlert, X } from "lucide-react";
 import type { Analysis, Feedback, Script, Step, Verdict } from "@/lib/types";
-import { Avatar, Dots, EVIDENCE, HeardMark, KIND, Meter, post, testerOf, useStore, type State } from "../ui";
+import { Avatar, Dots, EVIDENCE, DumplingMark, KIND, Meter, post, testerOf, useStore, type State } from "../ui";
 
 type Similar = { id: string; summary: string; count: number; ticketId: string | null; score: number; sameStep: boolean };
 type Coach = { analysis: Analysis | null; similar: Similar[] };
@@ -217,7 +217,7 @@ function Composer({ s, testerId, scriptId, step, verdict, onSent }: { s: State; 
 
       <div className="coach" aria-live="polite">
         <div className="coach-head">
-          <span className="hmark"><HeardMark size={14} /></span>
+          <span className="hmark"><DumplingMark size={14} /></span>
           Dumpling
           <span className="spacer" />
           {thinking && <Dots />}
@@ -268,7 +268,7 @@ function Sent({ s, f, onNext }: { s: State; f: Feedback; onNext: () => void }) {
   const g = s.groups.find((x) => x.id === f.groupId);
   const others = g ? g.memberIds.filter((id) => id !== f.id).length : 0;
   const name = testerOf(s, f.testerId)?.name.split(" ")[0];
-  const heard = f.messages.find((m) => m.from === "heard")?.text.match(/We heard: “([^”]*)”/)?.[1];
+  const heard = f.messages.find((m) => m.from === "dumpling")?.text.match(/We heard: “([^”]*)”/)?.[1];
   return (
     <div className="done">
       <span className="tick"><Check size={16} strokeWidth={3} /></span>

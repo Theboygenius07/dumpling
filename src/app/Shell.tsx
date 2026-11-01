@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ChartColumn, Check, ChevronsUpDown, FlaskConical, Inbox, Lightbulb, ListChecks, Plug, Settings, Ticket } from "lucide-react";
-import { Avatar, HeardMark, queue, useStore } from "./ui";
+import { Avatar, DumplingMark, queue, useStore } from "./ui";
 
 type Role = "tester" | "manager" | "developer" | "workspace";
 type Item = { href: string; label: string; icon: React.ReactNode; role: Role; n?: number; hot?: boolean };
@@ -51,7 +51,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="app">
       <aside className="side">
-        <Link href="/insights" className="ws"><span className="ws-mark"><HeardMark size={15} /></span>Dumpling</Link>
+        <Link href="/insights" className="ws"><span className="ws-mark"><DumplingMark size={15} /></span>Dumpling</Link>
         {s && (
           <Link href="/settings" className="cyc" title="Workspace settings">
             <span className="ws-prod">{s.cycle.product.slice(0, 1).toUpperCase()}</span>

@@ -36,7 +36,7 @@ export type Analysis = {
 export type Message = {
   id: string;
   at: string;
-  from: "heard" | "manager" | "tester";
+  from: "dumpling" | "manager" | "tester";
   text: string;
   question?: boolean; // the tester is asked something
   options?: string[];
@@ -92,7 +92,7 @@ export type Group = {
   title: string;
   memberIds: string[];
   status: "open" | "ticketed" | "idea" | "closed";
-  createdBy: "heard" | "manager";
+  createdBy: "dumpling" | "manager";
   ticketId: string | null;
   draft: (TicketDraft & { credits: Record<string, string>; by: "model" | "rules" }) | null;
 };

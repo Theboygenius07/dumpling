@@ -26,25 +26,25 @@ export default function ConnectPage() {
   const webKey = web?.key;
   // The live preview runs the real widget, pointed at this Dumpling, inside the frame below.
   useEffect(() => {
-    if (!webKey || document.querySelector("script[data-heard-preview]")) return;
+    if (!webKey || document.querySelector("script[data-dumpling-preview]")) return;
     const el = document.createElement("script");
     el.src = "/widget.js";
     el.async = true;
     el.dataset.key = webKey;
     el.dataset.app = s?.cycle.product ?? "the app";
     el.dataset.target = "#heard-preview";
-    el.dataset.heardPreview = "";
+    el.dataset.dumplingPreview = "";
     document.body.appendChild(el);
     return () => {
       el.remove();
-      document.querySelectorAll("[data-heard-widget]").forEach((n) => n.remove());
+      document.querySelectorAll("[data-dumpling-widget]").forEach((n) => n.remove());
     };
     // Keyed on the key string: the store refreshes every few seconds and must not rebuild the widget.
   }, [webKey]);
 
   if (!s) return <div className="page empty"><Dots /></div>;
   const recent = s.feedback.filter((f) => f.source !== "tester").sort((a, b) => b.at.localeCompare(a.at)).slice(0, 6);
-  const key = web?.key ?? "hrd_…";
+  const key = web?.key ?? "dmp_…";
   const product = s.cycle.product;
   const snippet = `<script src="${origin}/widget.js"\n        data-key="${key}" data-app="${product}" async></script>`;
   const curl = `curl -X POST ${origin}/api/intake \\\n  -H "Authorization: Bearer ${key}" \\\n  -H "Content-Type: application/json" \\\n  -d '{"text": "The share link asks my friend to sign in", "kind": "problem", "name": "Ada", "page": "/board/123"}'`;

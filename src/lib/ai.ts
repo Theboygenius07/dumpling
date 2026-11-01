@@ -34,7 +34,7 @@ async function json<T>(system: string, user: string): Promise<T | null> {
     const text = (res as OpenAI.Chat.Completions.ChatCompletion).choices[0]?.message?.content ?? "";
     return JSON.parse(text) as T;
   } catch (e) {
-    console.error("[heard] model call failed:", (e as Error).message);
+    console.error("[dumpling] model call failed:", (e as Error).message);
     return null;
   }
 }
@@ -145,7 +145,7 @@ export async function embed(texts: string[]): Promise<number[][] | null> {
     const res = await c.embeddings.create({ model: EMBED, input: texts });
     return res.data.map((d) => d.embedding);
   } catch (e) {
-    console.error("[heard] embedding failed:", (e as Error).message);
+    console.error("[dumpling] embedding failed:", (e as Error).message);
     return null;
   }
 }

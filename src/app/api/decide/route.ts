@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     return Response.json({ ok: true, result });
   } catch (e) {
     const msg = e instanceof Refused ? e.message : "That didn’t go through — try again.";
-    if (!(e instanceof Refused)) console.error("[heard] decide failed:", e);
+    if (!(e instanceof Refused)) console.error("[dumpling] decide failed:", e);
     return Response.json({ message: msg }, { status: 409 });
   }
 }

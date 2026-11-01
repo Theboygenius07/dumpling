@@ -2,6 +2,11 @@
   "name": "dumpling",
   "private": true,
   "version": "0.1.0",
+  "description": "UAT feedback, neatly folded. Testers write in their own words; Dumpling groups duplicates, drafts tickets and asks kind questions \u2014 and a person decides every step.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev -p 4100 -H localhost",
     "build": "next build",

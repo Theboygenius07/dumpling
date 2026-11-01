@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     if (!out) return Response.json({ message: "That key isn’t connected to Dumpling." }, { status: 401, headers: CORS });
     return Response.json({ ok: true, id: out.id, message: "Thanks — a person on the team reads every note." }, { headers: CORS });
   } catch (e) {
-    console.error("[heard] intake failed:", e);
+    console.error("[dumpling] intake failed:", e);
     return Response.json({ message: "That didn’t send — try again." }, { status: 500, headers: CORS });
   }
 }

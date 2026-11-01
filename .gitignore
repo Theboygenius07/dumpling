@@ -1,8 +1,18 @@
+# dependencies and builds
 node_modules
 .next
-.env.local
-data/store.json
-next-env.d.ts
 *.tsbuildinfo
-video/
+next-env.d.ts
+
+# secrets: never commit
+.env
+.env.local
+.env.*.local
+
+# local data: the live workspace, voiceover takes, rendered videos
+data/store.json
+data/*.tmp
 data/voice/
+data/voice-old/
+video/
+.DS_Store

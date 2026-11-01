@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     };
     // A question Dumpling asked while they typed, and their answer, travel with the note.
     if (b.asked && b.answer) {
-      f.messages.push({ id: uid("m"), at: now(), from: "heard", text: b.asked, question: true, answered: true });
+      f.messages.push({ id: uid("m"), at: now(), from: "dumpling", text: b.asked, question: true, answered: true });
       f.messages.push({ id: uid("m"), at: now(), from: "tester", text: b.answer });
     }
     s.feedback.push(f);
