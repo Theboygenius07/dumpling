@@ -1,10 +1,10 @@
 /* Variable Inter with its optical-size axis: big headings get the display cut, as on linear.app. */
 @import url("https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap");
 
-/* Linear's language: neutral greys, one indigo accent, dense rows, small crisp
+/* Linear's language: neutral greys, one orange accent, dense rows, small crisp
    type, hairlines instead of shadows. Colour only where it carries meaning. */
 /* Linear's dark: near-black frame, one lifted panel, hairlines in white at low
-   alpha, one indigo accent. Colour only where it carries meaning. */
+   alpha, one orange accent. Colour only where it carries meaning. */
 :root {
   color-scheme: dark;
   --bg: #0f1012;
@@ -20,9 +20,9 @@
   --border-2: rgba(255, 255, 255, 0.11);
   --border-3: rgba(255, 255, 255, 0.2);
 
-  --accent: #6c78e6;
-  --accent-2: #7f8af0;
-  --accent-soft: rgba(108, 120, 230, 0.15);
+  --accent: #ea6a32;
+  --accent-2: #ff9561;
+  --accent-soft: rgba(234, 106, 50, 0.15);
 
   --green: #4cb782;
   --yellow: #f2c94c;
@@ -55,7 +55,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; height: 100%; }
 body { background: var(--side); color: var(--text); font: 13.5px/1.5 var(--font); -webkit-font-smoothing: antialiased; font-feature-settings: "cv11", "ss01"; }
-::selection { background: rgba(108, 120, 230, 0.35); }
+::selection { background: rgba(234, 106, 50, 0.35); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 6px; }
 a { color: inherit; text-decoration: none; }
 button, input, textarea, select { font: inherit; color: inherit; }
@@ -172,7 +172,7 @@ svg { flex: none; }
 
 /* inputs */
 .input, .textarea, .select { width: 100%; border: 0; border-radius: 7px; background: var(--sub); padding: 7px 10px; outline: none; box-shadow: inset 0 0 0 1px var(--border-2); font-size: 13.5px; line-height: 1.45; transition: box-shadow 100ms; }
-.input:focus, .textarea:focus, .select:focus { box-shadow: inset 0 0 0 1px var(--accent), 0 0 0 3px rgba(108, 120, 230, 0.2); }
+.input:focus, .textarea:focus, .select:focus { box-shadow: inset 0 0 0 1px var(--accent), 0 0 0 3px rgba(234, 106, 50, 0.2); }
 .textarea { resize: vertical; min-height: 72px; }
 ::placeholder { color: var(--text-3); }
 .field { display: block; }
@@ -426,8 +426,9 @@ svg { flex: none; }
 .case .case-body { grid-template-columns: minmax(0, 1fr) 340px; }
 
 /* ============ the site (Linear's grammar) ============ */
-.site { min-height: 100vh; background: #08090a; color: #f7f8f8; font-feature-settings: "cv01", "ss03"; overflow-x: hidden; }
+.site { min-height: 100vh; background: #08090a; color: #f7f8f8; font-feature-settings: "cv01", "ss03"; overflow-x: clip; }
 .site-wrap { width: min(1200px, calc(100% - 48px)); margin: 0 auto; }
+.site section[id] { scroll-margin-top: 72px; }
 .site-nav { position: sticky; top: 0; z-index: 30; background: rgba(8, 9, 10, 0.8); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
 .site-nav-in { display: flex; align-items: center; height: 64px; gap: 28px; }
 .site-logo { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
@@ -488,11 +489,11 @@ svg { flex: none; }
 @keyframes fig-draw { from { stroke-dashoffset: 34; } to { stroke-dashoffset: 0; } }
 .fig-svg .hi { stroke: rgba(255, 255, 255, 0.75); fill: rgba(255, 255, 255, 0.02); }
 .fig-svg .ln { stroke: rgba(255, 255, 255, 0.22); }
-.fig-svg .ok { stroke: #8b95f0; stroke-width: 1.6; stroke-linecap: round; }
+.fig-svg .ok { stroke: var(--accent-2); stroke-width: 1.6; stroke-linecap: round; }
 
 .site-feature { padding: 160px 0 0; }
 .site-feature-head { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: end; margin-bottom: 44px; }
-.site-kicker { display: block; margin-bottom: 14px; font-size: 13px; color: #8b95f0; font-weight: 500; }
+.site-kicker { display: block; margin-bottom: 14px; font-size: 13px; color: var(--accent-2); font-weight: 500; }
 .site-feature h2 { font-size: clamp(30px, 4vw, 48px); line-height: 1.04; font-weight: 510; letter-spacing: -0.022em; color: #f7f8f8; }
 .site-feature-head p { font-size: 17px; line-height: 1.6; color: #8a8f98; letter-spacing: -0.011em; max-width: 440px; text-wrap: pretty; }
 

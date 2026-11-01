@@ -39,6 +39,24 @@ export default function Site() {
     document.querySelectorAll(".site .reveal").forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, []);
+  // Keep the address clean: in-page links scroll without adding "#section" to it,
+  // and a link that arrives with one scrolls there and drops it.
+  useEffect(() => {
+    const smooth = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const goTo = (id: string, behavior: ScrollBehavior) => document.getElementById(id)?.scrollIntoView({ behavior, block: "start" });
+    if (location.hash) {
+      goTo(location.hash.slice(1), "auto");
+      history.replaceState(null, "", location.pathname + location.search);
+    }
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as Element).closest?.('a[href^="#"]');
+      if (!a || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      e.preventDefault();
+      goTo(a.getAttribute("href")!.slice(1), smooth ? "smooth" : "auto");
+    };
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+  }, []);
   return (
     <div className="site">
       <header className="site-nav">

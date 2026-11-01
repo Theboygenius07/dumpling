@@ -211,7 +211,7 @@ export function Empty({ icon, title, children }: { icon: React.ReactNode; title:
 // ---------- people ----------
 
 // Avatar hues, Linear-like: saturated but soft, white initials stay legible.
-const HUES = ["#5E6AD2", "#D4483A", "#2F9E6A", "#8E6CE0", "#D2558A", "#1E96B0", "#C77A12"];
+const HUES = ["#D9622B", "#D4483A", "#2F9E6A", "#8E6CE0", "#D2558A", "#1E96B0", "#C77A12"];
 export function Avatar({ t, size }: { t?: Pick<Tester, "name">; size?: "sm" | "lg" }) {
   const name = t?.name ?? "?";
   const i = name.split(/\s+/).filter((p) => /^[A-Za-z]/.test(p)).map((p) => p[0]).slice(0, 2).join("");
