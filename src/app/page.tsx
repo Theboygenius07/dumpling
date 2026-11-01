@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Dots, DumplingMark } from "./ui";
 
@@ -20,15 +20,25 @@ function useDemo() {
 }
 
 const FEATURES = [
-  { id: "testing", kicker: "Run tests", title: "Testing,\nguided", body: "Testers follow your script one step at a time and say what went wrong in their own words. Their browser, device and step are attached for them. Dumpling says back what it understood — and asks one short question when something’s missing.", img: "/site/test.jpg", alt: "A tester writing what went wrong, with Dumpling replying beside it" },
-  { id: "review", kicker: "Review", title: "One case\nat a time", body: "The same bug, reported five ways, becomes one case. Dumpling shows how sure it is, and why — for and against. You decide: keep a report in, take it out, ask a kind question, change the severity. Nothing is approved in bulk.", img: "/site/review-maybe.jpg", alt: "A report Dumpling isn’t sure about, with its reasons for and against" },
-  { id: "tickets", kicker: "Tickets", title: "Tickets developers\ncan start from", body: "Steps to reproduce, expected and actual, every tester’s setup and exact words — and who drafted it and who approved it. Copy it into GitHub or Jira, or push it there directly.", img: "/site/ticket.jpg", alt: "A ticket with steps, expected and actual, and every reporter" },
-  { id: "connect", kicker: "Connect your app", title: "Feedback from\ninside your app", body: "One line adds a feedback button to any web app; an API takes reviews from anywhere else. Real users’ notes land in the same queue, folded in with your testers’ reports of the same bug.", img: "/site/connect.jpg", alt: "Connections with their keys, the widget snippet and a live preview" },
-  { id: "insights", kicker: "Insights", title: "See the whole\ncycle", body: "Where testing hurts, where every note went, whether every tester heard back — and how often you agreed with Dumpling, so you know when to trust it.", img: "/site/insights.jpg", alt: "Insights across the test cycle" },
+  { id: "testing", kicker: "Test", title: "Guide every\ntest run", body: "Testers follow your script step by step and say what went wrong in their own words. Their setup comes attached. Dumpling asks one short question when something’s missing.", img: "/site/test.jpg", alt: "A tester writing what went wrong, with Dumpling replying beside it" },
+  { id: "review", kicker: "Review", title: "Review one case\nat a time", body: "The same bug, reported five ways, becomes one case. See how sure Dumpling is, and why — then decide. Nothing is approved in bulk.", img: "/site/review-maybe.jpg", alt: "A report Dumpling isn’t sure about, with its reasons for and against" },
+  { id: "tickets", kicker: "Ship", title: "Hand developers\nclear tickets", body: "Steps, expected and actual, every tester’s setup and their exact words — ready for GitHub or Jira.", img: "/site/ticket.jpg", alt: "A ticket with steps, expected and actual, and every reporter" },
+  { id: "connect", kicker: "Connect", title: "Collect feedback\nfrom inside your app", body: "One line adds a feedback button to any web app. Real users’ notes land in the same queue as your testers’.", img: "/site/connect.jpg", alt: "Connections with their keys, the widget snippet and a live preview" },
+  { id: "insights", kicker: "Insights", title: "Understand the\nwhole cycle", body: "Where testing hurts, where every note went, and whether every tester heard back.", img: "/site/insights.jpg", alt: "Insights across the test cycle" },
 ];
 
 export default function Site() {
   const demo = useDemo();
+  // Sections rise in as they reach the screen. The class is added here, so with
+  // no script (or reduced motion) everything is simply shown.
+  useEffect(() => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const root = document.querySelector(".site");
+    root?.classList.add("motion");
+    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { rootMargin: "0px 0px -8% 0px" });
+    document.querySelectorAll(".site .reveal").forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
   return (
     <div className="site">
       <header className="site-nav">
@@ -42,46 +52,46 @@ export default function Site() {
         </div>
       </header>
 
-      <section className="site-wrap site-hero">
+      <section className="site-wrap site-hero site-in">
         <h1>Get clear feedback<br />from every tester</h1>
         <div className="site-hero-row">
-          <p>Testers say what went wrong in their own words. Dumpling turns it into clear tickets — and you approve each one.</p>
+          <p>Built for user acceptance testing. Testers write in their own words — you approve every ticket.</p>
           <button className="site-new" onClick={demo.go} disabled={demo.busy}><span>Demo</span>{demo.busy ? <Dots /> : <>Try it with chalk <ArrowRight size={13} /></>}</button>
         </div>
-        <div className="row" style={{ gap: 10, marginTop: 30 }}>
+        <div className="site-hero-cta">
           <button className="site-pill lg" onClick={demo.go} disabled={demo.busy}>{demo.busy ? <Dots /> : "Try the chalk demo"}</button>
-          <Link href="/signup" className="site-ghost">Start your own workspace <ArrowRight size={14} /></Link>
+          <Link href="/signup" className="site-ghost">Start a workspace <ArrowRight size={14} /></Link>
         </div>
         {demo.err && <p className="small" style={{ color: "var(--bug)", marginTop: 10 }}>{demo.err}</p>}
       </section>
 
       <section className="site-wrap">
-        <div className="site-shot hero-shot"><img src="/site/review.jpg" alt="Dumpling’s review queue" width={2880} height={1800} /></div>
+        <div className="site-shot hero-shot site-in"><img src="/site/review.jpg" alt="Dumpling’s review queue" width={2880} height={1800} /></div>
       </section>
 
       <section className="site-wrap site-statement" id="how">
-        <h2>One bug, five reports, one ticket. <span>Dumpling folds the same problem — told five different ways — into one case, shows its working, and leaves every decision to a person.</span></h2>
+        <h2 className="reveal">A calmer way to run UAT. <span>Dumpling turns scattered tester notes into one clear queue&nbsp;— and leaves every decision to a person.</span></h2>
       </section>
 
       <section className="site-wrap site-figs">
-        <Fig n="0.1" title="Easy to give" body="Testers write in their own words. No forms; their setup is attached for them."><FigNotes /></Fig>
-        <Fig n="0.2" title="Easy to act on" body="Duplicates fold into one case, with every witness credited for what they added."><FigFold /></Fig>
-        <Fig n="0.3" title="A person decides" body="One case at a time. Every judgement shows how sure it is, and can be overruled in a click."><FigDecide /></Fig>
+        <Fig n="0.1" title="Built for testers" body="Their own words, no forms. Browser, device and step come attached."><FigNotes /></Fig>
+        <Fig n="0.2" title="Folded by AI" body="Duplicates become one case, with every tester credited for what they saw."><FigFold /></Fig>
+        <Fig n="0.3" title="Decided by people" body="One case at a time. Every judgement shows its working and can be overruled."><FigDecide /></Fig>
       </section>
 
       {FEATURES.map((f) => (
         <section key={f.id} id={f.id} className="site-wrap site-feature">
-          <div className="site-feature-head">
+          <div className="site-feature-head reveal">
             <div><span className="site-kicker">{f.kicker}</span><h2>{f.title.split("\n").map((l, i) => <span key={i}>{l}<br /></span>)}</h2></div>
             <p>{f.body}</p>
           </div>
-          <div className="site-shot"><img src={f.img} alt={f.alt} width={2880} height={1800} /></div>
+          <div className="site-shot reveal"><img src={f.img} alt={f.alt} width={2880} height={1800} /></div>
         </section>
       ))}
 
       <section className="site-wrap site-cta">
-        <h2>Get clear feedback.<br /><span>Starting with your next test cycle.</span></h2>
-        <div className="row" style={{ gap: 10, marginTop: 28 }}>
+        <h2 className="reveal">Get clear feedback.<br /><span>Starting with your next test cycle.</span></h2>
+        <div className="site-hero-cta reveal">
           <button className="site-pill lg" onClick={demo.go} disabled={demo.busy}>{demo.busy ? <Dots /> : "Try the chalk demo"}</button>
           <Link href="/signup" className="site-ghost">Sign up <ArrowRight size={14} /></Link>
         </div>
@@ -101,7 +111,7 @@ export default function Site() {
 
 function Fig({ n, title, body, children }: { n: string; title: string; body: string; children: React.ReactNode }) {
   return (
-    <div className="site-fig">
+    <div className="site-fig reveal">
       <span className="site-fig-n">FIG {n}</span>
       <div className="site-fig-art">{children}</div>
       <h3>{title}</h3>
@@ -117,8 +127,8 @@ const slab = (x: number, y: number, w: number, d: number, z: number) => [iso(x, 
 function FigNotes() {
   return (
     <svg viewBox="0 0 200 160" className="fig-svg">
-      {[0, 14, 28, 42].map((z, i) => <polygon key={z} points={slab(-30, -30, 70, 52, z - 20)} className={i === 3 ? "hi" : ""} />)}
-      {[0, 1, 2].map((r) => <polyline key={r} points={`${iso(-22, -18 + r * 12, 22)} ${iso(26 - r * 9, -18 + r * 12, 22)}`} className="ln" />)}
+      {[0, 14, 28, 42].map((z, i) => <polygon key={z} points={slab(-30, -30, 70, 52, z - 20)} className={`layer${i === 3 ? " hi" : ""}`} style={{ "--i": i } as React.CSSProperties} />)}
+      <g className="layer" style={{ "--i": 3 } as React.CSSProperties}>{[0, 1, 2].map((r) => <polyline key={r} points={`${iso(-22, -18 + r * 12, 22)} ${iso(26 - r * 9, -18 + r * 12, 22)}`} className="ln" />)}</g>
     </svg>
   );
 }
@@ -126,7 +136,7 @@ function FigNotes() {
 function FigFold() {
   return (
     <svg viewBox="0 0 200 160" className="fig-svg">
-      {[-46, -23, 0, 23, 46].map((y) => <path key={y} d={`M18 ${80 + y} C 70 ${80 + y}, 80 80, 116 80`} />)}
+      {[-46, -23, 0, 23, 46].map((y) => <path key={y} className="flow" d={`M18 ${80 + y} C 70 ${80 + y}, 80 80, 116 80`} />)}
       <polygon points={slab(14, -14, 30, 30, 18)} className="hi" />
       <polygon points={[iso(14, 16, 18), iso(44, 16, 18), iso(44, 16, -6), iso(14, 16, -6)].join(" ")} />
       <polygon points={[iso(44, -14, 18), iso(44, 16, 18), iso(44, 16, -6), iso(44, -14, -6)].join(" ")} />
