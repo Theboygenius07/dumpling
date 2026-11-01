@@ -1,6 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { seed } from "@/lib/seed";
+import { setProduct } from "@/lib/ai";
 import { ensureSources } from "@/lib/sources";
 import { replace } from "@/lib/store";
 import { triageAll } from "@/lib/triage";
@@ -33,10 +34,13 @@ export async function POST(req: Request) {
     s.cycle.endsAt = move(s.cycle.endsAt);
   } else {
     s = seed();
+    setProduct(s.cycle);
     await triageAll(s);
     await fs.mkdir(path.dirname(CACHE), { recursive: true });
     await fs.writeFile(CACHE, JSON.stringify(s));
   }
+  s.cycle.productAbout ??= "an AI teaching whiteboard";
+  s.cycle.ticketPrefix ??= "CH";
   s.sources = undefined;
   ensureSources(s);
   await replace(s);

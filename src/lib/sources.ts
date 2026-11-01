@@ -8,8 +8,9 @@ export function ensureSources(s: Store) {
   if (s.sources?.length) return s.sources;
   const at = new Date().toISOString();
   s.sources = [
-    { id: "src_chalk_web", name: "chalk web app", kind: "widget", key: DEMO_KEY, createdAt: at, count: 0, lastAt: null },
-    { id: "src_chalk_reports", name: "chalk · Report a problem", kind: "chalk", key: "", createdAt: at, count: s.feedback.filter((f) => f.source === "chalk-report").length, lastAt: null },
+    { id: "src_web", name: `${s.cycle.product} web app`, kind: "widget", key: DEMO_KEY, createdAt: at, count: 0, lastAt: null },
+    // chalk's own Report a problem log: a connector only the chalk workspace has.
+    ...(s.cycle.product.toLowerCase() === "chalk" ? [{ id: "src_chalk_reports", name: "chalk · Report a problem", kind: "chalk" as const, key: "", createdAt: at, count: s.feedback.filter((f) => f.source === "chalk-report").length, lastAt: null }] : []),
   ];
   return s.sources;
 }

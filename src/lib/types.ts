@@ -141,7 +141,8 @@ export type Decision = {
 /** Somewhere feedback comes from besides scripted testing: an app's widget, an API, chalk's own reports. */
 export type Source = { id: string; name: string; kind: "widget" | "api" | "chalk"; key: string; createdAt: string; count: number; lastAt: string | null };
 
-export type Cycle = { id: string; name: string; product: string; productUrl: string; startedAt: string; endsAt: string };
+/** One cycle of one product's workspace. Heard is product-agnostic: chalk is just the first workspace. */
+export type Cycle = { id: string; name: string; product: string; productAbout?: string; ticketPrefix?: string; productUrl: string; startedAt: string; endsAt: string };
 
 export type Store = {
   cycle: Cycle;

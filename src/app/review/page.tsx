@@ -366,7 +366,7 @@ function TicketPanel({ s, g, members, act }: { s: State; g: Group; members: Feed
   }
   const set = <K extends keyof TicketDraft>(k: K, v: TicketDraft[K]) => setD({ ...d, [k]: v });
   const changed = (k: keyof TicketDraft) => JSON.stringify(d[k]) !== JSON.stringify(draft[k]);
-  const next = `CH-${s.nextTicket}`;
+  const next = `${s.cycle.ticketPrefix || "T"}-${s.nextTicket}`;
   const edits = (["steps", "expected", "actual", "notes"] as const).filter(changed).length;
 
   return (

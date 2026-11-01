@@ -49,7 +49,7 @@
     '.brand{margin-top:10px;font-size:11px;color:#a3a5ad;text-align:right}' +
     '</style>' +
     '<div class="wrap"><div class="card" hidden></div><button class="fab" type="button" aria-haspopup="dialog">' +
-    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 12c3-6 13-6 16 0M7 15c2-3 8-3 10 0M10.5 18c.8-1 2.2-1 3 0"/></svg>Feedback</button></div>';
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M3.5 5.5c5.5 0 6.5 6.5 11 6.5M3.5 12h11M3.5 18.5c5.5 0 6.5-6.5 11-6.5"/><circle cx="18.7" cy="12" r="2.5" fill="currentColor" stroke="none"/></svg>Feedback</button></div>';
 
   var card = root.querySelector(".card");
   var fab = root.querySelector(".fab");

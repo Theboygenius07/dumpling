@@ -114,6 +114,8 @@ export function seed(): Store {
       id: "cy_1",
       name: "chalk beta · UAT cycle 1",
       product: "chalk",
+      productAbout: "an AI teaching whiteboard",
+      ticketPrefix: "CH",
       productUrl: "http://localhost:3000",
       startedAt: at(60 * 26),
       endsAt: new Date(Date.now() + 2 * 86_400_000).toISOString(),

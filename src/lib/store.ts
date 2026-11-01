@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { setProduct } from "./ai";
 import type { Store } from "./types";
 
 const FILE = path.join(process.cwd(), "data", "store.json");
@@ -10,13 +11,16 @@ let queue: Promise<unknown> = Promise.resolve();
 
 export async function read(): Promise<Store | null> {
   try {
-    return JSON.parse(await fs.readFile(FILE, "utf8")) as Store;
+    const s = JSON.parse(await fs.readFile(FILE, "utf8")) as Store;
+    setProduct(s.cycle);
+    return s;
   } catch {
     return null;
   }
 }
 
 async function write(s: Store) {
+  setProduct(s.cycle);
   await fs.mkdir(path.dirname(FILE), { recursive: true });
   const tmp = `${FILE}.${process.pid}.tmp`;
   await fs.writeFile(tmp, JSON.stringify(s));

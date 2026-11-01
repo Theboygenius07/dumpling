@@ -31,7 +31,7 @@ export default function ConnectPage() {
     el.src = "/widget.js";
     el.async = true;
     el.dataset.key = webKey;
-    el.dataset.app = "chalk";
+    el.dataset.app = s?.cycle.product ?? "the app";
     el.dataset.target = "#heard-preview";
     el.dataset.heardPreview = "";
     document.body.appendChild(el);
@@ -45,7 +45,8 @@ export default function ConnectPage() {
   if (!s) return <div className="page empty"><Dots /></div>;
   const recent = s.feedback.filter((f) => f.source !== "tester").sort((a, b) => b.at.localeCompare(a.at)).slice(0, 6);
   const key = web?.key ?? "hrd_…";
-  const snippet = `<script src="${origin}/widget.js"\n        data-key="${key}" data-app="chalk" async></script>`;
+  const product = s.cycle.product;
+  const snippet = `<script src="${origin}/widget.js"\n        data-key="${key}" data-app="${product}" async></script>`;
   const curl = `curl -X POST ${origin}/api/intake \\\n  -H "Authorization: Bearer ${key}" \\\n  -H "Content-Type: application/json" \\\n  -d '{"text": "The share link asks my friend to sign in", "kind": "problem", "name": "Ada", "page": "/board/123"}'`;
 
   async function importChalk() {
@@ -88,7 +89,7 @@ export default function ConnectPage() {
             <p className="small muted" style={{ marginTop: 3 }}>One line before <span className="mono">&lt;/body&gt;</span>. People write in their own words; the page, their browser and any recent errors are attached for them.</p>
           </div>
           <Code text={snippet}>
-            <span className="k">&lt;script</span> src=<span className="s">&quot;{origin}/widget.js&quot;</span>{"\n"}        data-key=<span className="s">&quot;{key}&quot;</span> data-app=<span className="s">&quot;chalk&quot;</span> async<span className="k">&gt;&lt;/script&gt;</span>
+            <span className="k">&lt;script</span> src=<span className="s">&quot;{origin}/widget.js&quot;</span>{"\n"}        data-key=<span className="s">&quot;{key}&quot;</span> data-app=<span className="s">&quot;{product}&quot;</span> async<span className="k">&gt;&lt;/script&gt;</span>
           </Code>
           <div>
             <h3>2 · Or send from your server</h3>
@@ -101,11 +102,11 @@ export default function ConnectPage() {
         </div>
 
         <div className="stack">
-          <div className="row between"><h3>Try it — chalk with the button added</h3><span className="small muted">Live</span></div>
+          <div className="row between"><h3>Try it — {product} with the button added</h3><span className="small muted">Live</span></div>
           <div id="heard-preview" className="preview">
             <div style={{ display: "flex", alignItems: "center", gap: 6, height: 34, padding: "0 12px", borderBottom: "1px solid #e6e6ea", background: "#fff" }}>
               <i style={{ width: 9, height: 9, borderRadius: 5, background: "#ff5f57" }} /><i style={{ width: 9, height: 9, borderRadius: 5, background: "#febc2e" }} /><i style={{ width: 9, height: 9, borderRadius: 5, background: "#28c840" }} />
-              <span className="small" style={{ marginLeft: 10, color: "#8b8d97" }}>chalk · How do vaccines train the immune system?</span>
+              <span className="small" style={{ marginLeft: 10, color: "#8b8d97" }}>{product}{product.toLowerCase() === "chalk" ? " · How do vaccines train the immune system?" : ""}</span>
             </div>
             <div style={{ padding: 18, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               {[0, 1, 2, 3].map((i) => (
@@ -125,7 +126,7 @@ export default function ConnectPage() {
                 <Avatar t={testerOf(s, f.testerId)} />
                 <div style={{ minWidth: 0 }}>
                   <div className="clip" style={{ fontWeight: 500 }}>{f.text}</div>
-                  <div className="small muted clip">{f.origin?.page ? f.origin.page.replace(/^https?:\/\/[^/]+/, "") || "/" : "chalk"} · {ago(f.at)}</div>
+                  <div className="small muted clip">{f.origin?.page ? f.origin.page.replace(/^https?:\/\/[^/]+/, "") || "/" : product} · {ago(f.at)}</div>
                 </div>
                 <span className="row small" style={{ gap: 6, color: "var(--text-2)" }}><Status kind={NOTE_ICON[f.status]} />{NOTE_STATUS[f.status].label}</span>
               </Link>

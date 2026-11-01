@@ -4,6 +4,14 @@ import type { Analysis, Feedback, Kind, Script, Severity, Step, Tester, TicketDr
 const MODEL = process.env.OPENAI_MODEL || "gpt-5.6-luna";
 const EMBED = "text-embedding-3-small";
 
+// The product under test comes from the workspace, not from this file: Heard
+// works for any product, and chalk is just the first workspace.
+let PRODUCT = { name: "the product", about: "" };
+export function setProduct(p: { product: string; productAbout?: string }) {
+  PRODUCT = { name: p.product || "the product", about: p.productAbout ?? "" };
+}
+const P = () => (PRODUCT.about ? `${PRODUCT.name}, ${PRODUCT.about}` : PRODUCT.name);
+
 let client: OpenAI | null | undefined;
 function ai(): OpenAI | null {
   if (client === undefined) client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 30_000, maxRetries: 1 }) : null;
@@ -53,7 +61,7 @@ function describe(f: Pick<Feedback, "verdict" | "text">, ctx: Context, extra = "
 
 // ---------- reading one report ----------
 
-const ANALYZE = `You help run user acceptance testing (UAT) for a web app called chalk, an AI teaching whiteboard.
+const ANALYZE = () => `You help run user acceptance testing (UAT) for a product called ${P()}.
 A tester has written feedback in their own words. Read it the way a careful, kind UAT manager would.
 Return JSON with exactly these keys:
 - kind: "bug" (something did not work as the step expected), "idea" (a request or suggestion), "question" (they are asking how something works), "praise", or "unclear" (cannot tell yet).
@@ -73,7 +81,7 @@ Never invent details the tester did not give.`;
 
 export async function analyze(f: Pick<Feedback, "verdict" | "text">, ctx: Context, answers = "", captured = ""): Promise<Analysis> {
   const extra = [answers ? `Their answers to follow-up questions: ${answers}` : "", captured ? `Captured automatically by the app (not written by the user): ${captured}` : ""].filter(Boolean).join("\n");
-  const out = await json<Partial<Analysis>>(ANALYZE, describe(f, ctx, extra));
+  const out = await json<Partial<Analysis>>(ANALYZE(), describe(f, ctx, extra));
   if (out && typeof out.summary === "string") {
     return {
       kind: (["bug", "idea", "question", "praise", "unclear"] as Kind[]).includes(out.kind as Kind) ? (out.kind as Kind) : "unclear",
@@ -161,7 +169,7 @@ export function overlap(a: string, b: string) {
   return n / Math.max(1, Math.min(A.size, B.size));
 }
 
-const COMPARE = `You help run user acceptance testing for chalk, an AI teaching whiteboard. Two testers wrote feedback.
+const COMPARE = () => `You help run user acceptance testing for ${P()}. Two testers wrote feedback.
 Decide whether they describe the SAME underlying problem (one fix would resolve both), a RELATED one (same area, different fault — e.g. slow vs never finishes), DIFFERENT problems, or you are UNSURE because one report is too thin to tell.
 Return JSON:
 - verdict: "same" | "related" | "different" | "unsure"
@@ -173,7 +181,7 @@ Write reasons in plain language for a UAT manager. Refer to the notes by the tes
 export type Comparison = { verdict: "same" | "related" | "different" | "unsure"; probabilitySame: number; same: string[]; differ: string[] };
 
 export async function compare(a: string, b: string, names: [string, string] = ["A", "B"]): Promise<Comparison | null> {
-  const out = await json<Partial<Comparison>>(COMPARE, `${names[0]}'s note:\n${a}\n\n${names[1]}'s note:\n${b}`);
+  const out = await json<Partial<Comparison>>(COMPARE(), `${names[0]}'s note:\n${a}\n\n${names[1]}'s note:\n${b}`);
   if (!out || typeof out.probabilitySame !== "number") return null;
   const verdict = (["same", "related", "different", "unsure"] as const).includes(out.verdict as never) ? (out.verdict as Comparison["verdict"]) : "unsure";
   // The number shown must agree with the words shown: a "different" can't carry 0.9.
@@ -190,7 +198,7 @@ export const reportText = (f: Pick<Feedback, "verdict" | "text">, ctx: Context) 
 
 // ---------- drafts a person approves ----------
 
-const TICKET = `You draft a bug ticket for a developer from UAT feedback on chalk, an AI teaching whiteboard. Several testers may describe the same bug.
+const TICKET = () => `You draft a bug ticket for a developer from UAT feedback on ${P()}. Several testers may describe the same bug.
 Return JSON:
 - title: under 70 characters, names the symptom and where ("Board never finishes drawing on Safari").
 - severity: "blocker" | "major" | "minor" | "cosmetic"
@@ -202,7 +210,7 @@ Return JSON:
 - credits: an object mapping each report id to the one most useful detail THAT report adds (short phrase, their words where possible).`;
 
 export async function draftTicket(input: string): Promise<(TicketDraft & { credits: Record<string, string> }) | null> {
-  const out = await json<Partial<TicketDraft & { credits: Record<string, string> }>>(TICKET, input);
+  const out = await json<Partial<TicketDraft & { credits: Record<string, string> }>>(TICKET(), input);
   if (!out || typeof out.title !== "string") return null;
   return {
     title: out.title,
@@ -216,7 +224,7 @@ export async function draftTicket(input: string): Promise<(TicketDraft & { credi
   };
 }
 
-const REPLY = `You write a short message from a UAT manager to a tester who gave feedback on chalk, an AI teaching whiteboard.
+const REPLY = () => `You write a short message from a UAT manager to a tester who gave feedback on ${P()}.
 The tester gave their time; make them feel heard. Warm, plain, specific to what they said, 2-3 sentences, no corporate phrases, no exclamation overload.
 Purposes:
 - "not-a-bug": explain kindly that it works as designed and WHY (use the reason given), and thank them for noticing.
@@ -227,22 +235,22 @@ Purposes:
 Return JSON: { "text": string, "options": string[] } (options only for "ask", else []).`;
 
 export async function draftReply(purpose: string, input: string): Promise<{ text: string; options: string[] } | null> {
-  const out = await json<{ text?: string; options?: string[] }>(REPLY, `Purpose: ${purpose}\n${input}`);
+  const out = await json<{ text?: string; options?: string[] }>(REPLY(), `Purpose: ${purpose}\n${input}`);
   if (!out || typeof out.text !== "string") return null;
   return { text: out.text, options: Array.isArray(out.options) ? out.options.map(String).slice(0, 4) : [] };
 }
 
-const TITLE = `Write a short title for a bug report from UAT on chalk, an AI teaching whiteboard, the way a good bug tracker would: under 55 characters, names the symptom and where it happens ("Share link asks viewers to sign in"). No full stop. Never mention "the tester". Return JSON {"title": string}.`;
+const TITLE = () => `Write a short title for a bug report from UAT on ${P()}, the way a good bug tracker would: under 55 characters, names the symptom and where it happens ("Share link asks viewers to sign in"). No full stop. Never mention "the tester". Return JSON {"title": string}.`;
 
 export async function titleOf(texts: string[]): Promise<string | null> {
-  const out = await json<{ title?: string }>(TITLE, texts.map((t, i) => `${i + 1}. ${t}`).join("\n"));
+  const out = await json<{ title?: string }>(TITLE(), texts.map((t, i) => `${i + 1}. ${t}`).join("\n"));
   return typeof out?.title === "string" && out.title.trim() ? out.title.trim().replace(/\.$/, "") : null;
 }
 
-const THEME = `Name the product idea (or the shared theme of several ideas) from testers in 2-5 words, like a backlog item (e.g. "Export and print boards", "Choose the narrator's voice"). Return JSON {"theme": string}.`;
+const THEME = () => `Name the product idea (or the shared theme of several ideas) from testers in 2-5 words, like a backlog item (e.g. "Export and print boards", "Choose the narrator's voice"). Return JSON {"theme": string}.`;
 
 export async function themeOf(texts: string[]): Promise<string | null> {
-  const out = await json<{ theme?: string }>(THEME, texts.map((t, i) => `${i + 1}. ${t}`).join("\n"));
+  const out = await json<{ theme?: string }>(THEME(), texts.map((t, i) => `${i + 1}. ${t}`).join("\n"));
   return typeof out?.theme === "string" ? out.theme : null;
 }
 

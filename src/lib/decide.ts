@@ -36,7 +36,7 @@ export async function decide(s: Store, a: Action): Promise<string> {
       if (!g || g.status !== "open") throw new Refused("This group has already been decided.");
       const d = a.draft;
       if (!d?.title?.trim()) throw new Refused("A ticket needs a title.");
-      const id = `CH-${s.nextTicket++}`;
+      const id = `${s.cycle.ticketPrefix || "T"}-${s.nextTicket++}`;
       const ai = g.draft;
       const edited = ai ? (["title", "severity", "expected", "actual", "notes"] as const).filter((k) => String(ai[k]).trim() !== String(d[k]).trim()) : [];
       if (ai && ai.steps.join("\n") !== d.steps.join("\n")) edited.push("steps" as never);

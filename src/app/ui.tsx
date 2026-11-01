@@ -161,10 +161,12 @@ export function Dots() {
   return <span className="dots" aria-label="Thinking"><i /><i /><i /></span>;
 }
 
+/** Heard's mark: three notes converging into one point — many reports, one problem. */
 export function HeardMark({ size = 22 }: { size?: number }) {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
-      <path d="M4 12c3-6 13-6 16 0M7 15c2-3 8-3 10 0M10.5 18c.8-1 2.2-1 3 0" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" />
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round">
+      <path d="M3.5 5.5c5.5 0 6.5 6.5 11 6.5M3.5 12h11M3.5 18.5c5.5 0 6.5-6.5 11-6.5" />
+      <circle cx="18.7" cy="12" r="2.5" fill="currentColor" stroke="none" />
     </svg>
   );
 }

@@ -60,7 +60,6 @@ export default function InsightsPage() {
           <p>Testers say what went wrong in their own words. Heard turns it into one case per problem and shows its working. A person decides every step, and every tester hears back.</p>
         </div>
         <div className="row">
-          <button className="btn" disabled={!!busy} onClick={() => run("import")}>{busy === "import" ? <Dots /> : <Download size={15} />}Import chalk’s reports</button>
           <button className="btn ghost" disabled={!!busy} onClick={() => run("reset")}>{busy === "reset" ? <Dots /> : <RotateCcw size={15} />}Reset demo</button>
         </div>
       </div>

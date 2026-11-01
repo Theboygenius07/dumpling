@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ChartColumn, Check, ChevronsUpDown, FlaskConical, Inbox, Lightbulb, ListChecks, Plug, Ticket } from "lucide-react";
+import { ChartColumn, Check, ChevronsUpDown, FlaskConical, Inbox, Lightbulb, ListChecks, Plug, Settings, Ticket } from "lucide-react";
 import { Avatar, HeardMark, queue, useStore } from "./ui";
 
 type Role = "tester" | "manager" | "developer" | "workspace";
@@ -11,7 +11,7 @@ type Item = { href: string; label: string; icon: React.ReactNode; role: Role; n?
 function roleOf(path: string): Role {
   if (path.startsWith("/test") || path.startsWith("/notes")) return "tester";
   if (path.startsWith("/tickets")) return "developer";
-  if (path.startsWith("/connect")) return "workspace";
+  if (path.startsWith("/connect") || path.startsWith("/settings")) return "workspace";
   return "manager";
 }
 
@@ -41,6 +41,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     ] },
     { label: "Workspace", items: [
       { href: "/connect", label: "Connect your app", icon: <Plug size={15} />, role: "workspace", n: fromApps || undefined },
+      { href: "/settings", label: "Settings", icon: <Settings size={15} />, role: "workspace" },
     ] },
   ];
   const here = groups.flatMap((g) => g.items).find((i) => path.startsWith(i.href));
@@ -50,10 +51,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <aside className="side">
         <Link href="/insights" className="ws"><span className="ws-mark"><HeardMark size={15} /></span>Heard</Link>
         {s && (
-          <div className="cyc">
-            <b>{s.cycle.name}</b>
-            <span><i />Testing {s.cycle.product} · live</span>
-          </div>
+          <Link href="/settings" className="cyc" title="Workspace settings">
+            <span className="ws-prod">{s.cycle.product.slice(0, 1).toUpperCase()}</span>
+            <span className="cyc-text">
+              <span className="cyc-name">{s.cycle.product}</span>
+              <span className="cyc-sub"><i />{s.cycle.name.toLowerCase().startsWith(s.cycle.product.toLowerCase()) ? s.cycle.name.slice(s.cycle.product.length).replace(/^\s*·?\s*/, "") : s.cycle.name}</span>
+            </span>
+          </Link>
         )}
         {groups.map((g) => (
           <div key={g.label}>
