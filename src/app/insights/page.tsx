@@ -60,7 +60,7 @@ export default function InsightsPage() {
           <p>Testers say what went wrong in their own words. Dumpling turns it into one case per problem and shows its working. A person decides every step, and every tester hears back.</p>
         </div>
         <div className="row">
-          <button className="btn ghost" disabled={!!busy} onClick={() => run("reset")}>{busy === "reset" ? <Dots /> : <RotateCcw size={15} />}Reset demo</button>
+          {s.workspace === "ws_chalk" && <button className="btn ghost" disabled={!!busy} onClick={() => run("reset")}>{busy === "reset" ? <Dots /> : <RotateCcw size={15} />}Reset demo</button>}
         </div>
       </div>
 

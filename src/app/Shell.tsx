@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ChartColumn, Check, ChevronsUpDown, FlaskConical, Inbox, Lightbulb, ListChecks, Plug, Settings, Ticket } from "lucide-react";
-import { Avatar, DumplingMark, queue, useStore } from "./ui";
+import { ChartColumn, Check, ChevronsUpDown, FlaskConical, Inbox, Lightbulb, ListChecks, Plug, Plus, Settings, Ticket, UserPlus } from "lucide-react";
+import { Avatar, Dots, DumplingMark, queue, useStore } from "./ui";
 
 type Role = "tester" | "manager" | "developer" | "workspace";
 type Item = { href: string; label: string; icon: React.ReactNode; role: Role; n?: number; hot?: boolean };
@@ -11,16 +11,18 @@ type Item = { href: string; label: string; icon: React.ReactNode; role: Role; n?
 function roleOf(path: string): Role {
   if (path.startsWith("/test") || path.startsWith("/notes")) return "tester";
   if (path.startsWith("/tickets")) return "developer";
-  if (path.startsWith("/connect") || path.startsWith("/settings")) return "workspace";
+  if (path.startsWith("/connect") || path.startsWith("/settings") || path.startsWith("/workspaces")) return "workspace";
   return "manager";
 }
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const role = roleOf(path);
-  const { s, testerId } = useStore();
+  const { s, empty, testerId } = useStore();
   // The voiceover recorder is a full-screen tool, not part of the product.
   if (path.startsWith("/voice")) return <>{children}</>;
+  // A fresh install has no workspace yet: welcome, except on the page that makes one.
+  if (empty && !path.startsWith("/workspaces")) return <Welcome />;
 
   const mine = s?.feedback.filter((f) => f.testerId === testerId) ?? [];
   const questions = mine.filter((f) => f.messages.some((m) => m.question && !m.answered && m.from === "manager")).length;
@@ -52,15 +54,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     <div className="app">
       <aside className="side">
         <Link href="/insights" className="ws"><span className="ws-mark"><DumplingMark size={15} /></span>Dumpling</Link>
-        {s && (
-          <Link href="/settings" className="cyc" title="Workspace settings">
-            <span className="ws-prod">{s.cycle.product.slice(0, 1).toUpperCase()}</span>
-            <span className="cyc-text">
-              <span className="cyc-name">{s.cycle.product}</span>
-              <span className="cyc-sub"><i />{s.cycle.name.toLowerCase().startsWith(s.cycle.product.toLowerCase()) ? s.cycle.name.slice(s.cycle.product.length).replace(/^\s*·?\s*/, "") : s.cycle.name}</span>
-            </span>
-          </Link>
-        )}
+        <WorkspaceSwitcher />
         {groups.map((g) => (
           <div key={g.label}>
             <div className="sgroup">{g.label}</div>
@@ -86,11 +80,75 @@ export function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function WorkspaceSwitcher() {
+  const { s, workspaces, switchTo, refresh } = useStore();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    addEventListener("mousedown", close);
+    return () => removeEventListener("mousedown", close);
+  }, [open]);
+  if (!s) return null;
+  const sub = s.cycle.name.toLowerCase().startsWith(s.cycle.product.toLowerCase()) ? s.cycle.name.slice(s.cycle.product.length).replace(/^\s*·?\s*/, "") : s.cycle.name;
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button className="cyc" onClick={() => setOpen(!open)} aria-haspopup="menu" aria-expanded={open} title="Switch workspace" style={{ width: "100%", border: 0, textAlign: "left" }}>
+        <span className="ws-prod">{s.cycle.product.slice(0, 1).toUpperCase()}</span>
+        <span className="cyc-text" style={{ flex: 1 }}>
+          <span className="cyc-name">{s.cycle.product}</span>
+          <span className="cyc-sub"><i />{sub}</span>
+        </span>
+        <ChevronsUpDown size={14} className="muted" />
+      </button>
+      {open && (
+        <div className="menu" role="menu" style={{ top: 58, bottom: "auto", width: "100%" }}>
+          <div className="menu-label">Workspaces</div>
+          {workspaces.map((w) => (
+            <button key={w.id} role="menuitem" className={w.id === s.workspace ? "on" : ""} onClick={async () => { setOpen(false); if (w.id !== s.workspace) { await switchTo(w.id); router.push("/insights"); } }}>
+              <span className="ws-prod" style={{ width: 22, height: 22, fontSize: 11, borderRadius: 6 }}>{w.name.slice(0, 1).toUpperCase()}</span>
+              <span className="grow" style={{ fontSize: 13, fontWeight: 500 }}>{w.name}</span>
+              {w.id === s.workspace && <Check size={14} />}
+            </button>
+          ))}
+          <div className="hr" style={{ margin: "5px 0" }} />
+          <button role="menuitem" onClick={() => { setOpen(false); router.push("/workspaces/new"); }}><Plus size={14} /><span style={{ fontSize: 13 }}>New workspace</span></button>
+          {!workspaces.some((w) => w.id === "ws_chalk") && (
+            <button role="menuitem" onClick={async () => { setOpen(false); await fetch("/api/seed", { method: "POST" }); await refresh(); router.push("/insights"); }}><DumplingMark size={14} /><span style={{ fontSize: 13 }}>Open the chalk demo</span></button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Welcome() {
+  const { refresh } = useStore();
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  return (
+    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}>
+      <div style={{ width: "min(520px, 100%)", textAlign: "center" }}>
+        <span className="ws-mark" style={{ width: 52, height: 52, borderRadius: 15, margin: "0 auto" }}><DumplingMark size={30} /></span>
+        <h1 style={{ marginTop: 18 }}>Dumpling</h1>
+        <p className="muted" style={{ marginTop: 8 }}>UAT feedback, neatly folded. Start a workspace for your product, or open the demo to see a test cycle already under way.</p>
+        <div className="row" style={{ justifyContent: "center", marginTop: 22 }}>
+          <button className="btn primary lg" onClick={() => router.push("/workspaces/new")}><Plus size={15} />New workspace</button>
+          <button className="btn lg" disabled={busy} onClick={async () => { setBusy(true); await fetch("/api/seed", { method: "POST" }); await refresh(); setBusy(false); router.push("/insights"); }}>{busy ? <Dots /> : null}Open the chalk demo</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Viewing({ role }: { role: Role }) {
   const { s, testerId } = useStore();
   if (!s) return null;
   if (role === "tester") {
-    const t = s.testers.find((x) => x.id === testerId) ?? s.testers[0]!;
+    const t = s.testers.find((x) => x.id === testerId) ?? s.testers[0];
+    if (!t) return <span className="viewing" style={{ paddingLeft: 9 }}>No testers yet</span>;
     return <span className="viewing"><Avatar t={t} size="sm" />Viewing as {t.name} · tester</span>;
   }
   if (role === "developer") return <span className="viewing"><Avatar t={{ name: "Dev team" }} size="sm" />Viewing as the developer</span>;
@@ -109,6 +167,7 @@ function Persona() {
   }, [open]);
   if (!s) return null;
   const people = s.testers.filter((x) => x.id.startsWith("t_") && x.id !== "t_field");
+  if (!people.length) return <Link href="/settings?tab=people" className="me-btn"><span className="avatar" style={{ background: "var(--raise)", color: "var(--text-2)" }}><UserPlus size={13} /></span><span className="grow"><div className="nm">Add testers</div><div className="sb">No one is testing yet</div></span></Link>;
   const t = people.find((x) => x.id === testerId) ?? people[0]!;
   return (
     <div ref={ref}>

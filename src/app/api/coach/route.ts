@@ -1,5 +1,5 @@
 import { analyze, contextFor, cosine, embed, overlap } from "@/lib/ai";
-import { read } from "@/lib/store";
+import { read, wsOf } from "@/lib/store";
 import { alike } from "@/lib/triage";
 import type { Verdict } from "@/lib/types";
 
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 // whether someone already reported it. It never changes anything.
 export async function POST(req: Request) {
   const b = (await req.json().catch(() => null)) as { testerId?: string; scriptId?: string | null; stepId?: string | null; verdict?: Verdict; text?: string } | null;
-  const s = await read();
+  const s = await read(await wsOf(req));
   const text = b?.text?.trim() ?? "";
   if (!s || !b || text.split(/\s+/).length < 2) return Response.json({ analysis: null, similar: [] });
   const ctx = contextFor({ testerId: b.testerId ?? "", scriptId: b.scriptId ?? null, stepId: b.stepId ?? null }, s.testers, s.scripts);

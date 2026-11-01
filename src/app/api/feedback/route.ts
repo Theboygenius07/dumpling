@@ -1,4 +1,4 @@
-import { change, now, uid } from "@/lib/store";
+import { change, now, uid, wsOf } from "@/lib/store";
 import { ack, triage } from "@/lib/triage";
 import type { Feedback, Verdict } from "@/lib/types";
 
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   const text = b?.text?.trim() ?? "";
   if (!b?.testerId || text.length < 2) return Response.json({ message: "Say what happened, in a few words." }, { status: 400 });
   const verdict: Verdict = (["worked", "failed", "off", "idea"] as const).includes(b.verdict as Verdict) ? (b.verdict as Verdict) : "off";
-  const f = await change(async (s) => {
+  const f = await change(await wsOf(req), async (s) => {
     if (!s.testers.some((t) => t.id === b.testerId)) throw new Error("Unknown tester");
     const f: Feedback = {
       id: uid("f"),

@@ -3,7 +3,7 @@ import path from "node:path";
 import { seed } from "@/lib/seed";
 import { setProduct } from "@/lib/ai";
 import { ensureSources } from "@/lib/sources";
-import { replace } from "@/lib/store";
+import { DEMO_WS, replace, wsCookie } from "@/lib/store";
 import { triageAll } from "@/lib/triage";
 import type { Store } from "@/lib/types";
 
@@ -42,7 +42,8 @@ export async function POST(req: Request) {
   s.cycle.productAbout ??= "an AI teaching whiteboard";
   s.cycle.ticketPrefix ??= "CH";
   s.sources = undefined;
-  ensureSources(s);
-  await replace(s);
-  return Response.json({ ok: true, feedback: s.feedback.length, groups: s.groups.length });
+  ensureSources(s, true);
+  await replace(DEMO_WS, s, "chalk");
+  // Loading the demo also opens it in this browser.
+  return Response.json({ ok: true, feedback: s.feedback.length, groups: s.groups.length }, { headers: { "set-cookie": wsCookie(DEMO_WS) } });
 }

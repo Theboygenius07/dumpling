@@ -1,5 +1,5 @@
-import { change, now, uid } from "@/lib/store";
-import { ensureSources, envFrom, hash } from "@/lib/sources";
+import { change, findWorkspace, now, uid } from "@/lib/store";
+import { envFrom, hash } from "@/lib/sources";
 import { ack, triage } from "@/lib/triage";
 import type { Feedback, Verdict } from "@/lib/types";
 
@@ -22,9 +22,12 @@ export async function POST(req: Request) {
   const key = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || b?.key || "";
   const text = b?.text?.toString().trim().slice(0, 4000) ?? "";
   if (text.length < 2) return Response.json({ message: "Say what happened, in a few words." }, { status: 400, headers: CORS });
+  // The key alone says which workspace this belongs to.
+  const ws = key ? await findWorkspace((s) => (s.sources ?? []).some((x) => x.key === key)) : null;
+  if (!ws) return Response.json({ message: "That key isn’t connected to Dumpling." }, { status: 401, headers: CORS });
   try {
-    const out = await change(async (s) => {
-      const src = ensureSources(s).find((x) => x.key && x.key === key);
+    const out = await change(ws, async (s) => {
+      const src = (s.sources ?? []).find((x) => x.key === key);
       if (!src) return null;
       const ua = b?.userAgent || req.headers.get("user-agent") || "";
       const who = (b?.email || b?.name || "").toString().trim();

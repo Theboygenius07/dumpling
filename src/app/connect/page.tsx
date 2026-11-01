@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Check, Copy, Download, FileText, Globe, Plug, Server } from "lucide-react";
-import { Avatar, Dots, NOTE_ICON, NOTE_STATUS, Status, ago, testerOf, useStore } from "../ui";
+import { Check, Copy, Download, Eye, FileText, Globe, Plug, Plus, RefreshCw, Server, Trash2 } from "lucide-react";
+import { Avatar, Dots, NOTE_ICON, NOTE_STATUS, Status, ago, post, testerOf, useStore } from "../ui";
 
 function Code({ text, children }: { text: string; children: React.ReactNode }) {
   const [copied, setCopied] = useState(false);
@@ -20,9 +20,13 @@ export default function ConnectPage() {
   const { s, refresh, toast } = useStore();
   const [origin, setOrigin] = useState("http://localhost:4100");
   const [busy, setBusy] = useState(false);
+  const [sel, setSel] = useState<string | null>(null);
+  const [shown, setShown] = useState<string | null>(null);
+  const [newName, setNewName] = useState("");
   useEffect(() => setOrigin(location.origin), []);
 
-  const web = s?.sources?.find((x) => x.kind === "widget");
+  const keyed = (s?.sources ?? []).filter((x) => x.kind !== "chalk");
+  const web = keyed.find((x) => x.id === sel) ?? keyed.find((x) => x.kind === "widget") ?? keyed[0];
   const webKey = web?.key;
   // The live preview runs the real widget, pointed at this Dumpling, inside the frame below.
   useEffect(() => {
@@ -32,7 +36,7 @@ export default function ConnectPage() {
     el.async = true;
     el.dataset.key = webKey;
     el.dataset.app = s?.cycle.product ?? "the app";
-    el.dataset.target = "#heard-preview";
+    el.dataset.target = "#dumpling-preview";
     el.dataset.dumplingPreview = "";
     document.body.appendChild(el);
     return () => {
@@ -48,6 +52,14 @@ export default function ConnectPage() {
   const product = s.cycle.product;
   const snippet = `<script src="${origin}/widget.js"\n        data-key="${key}" data-app="${product}" async></script>`;
   const curl = `curl -X POST ${origin}/api/intake \\\n  -H "Authorization: Bearer ${key}" \\\n  -H "Content-Type: application/json" \\\n  -d '{"text": "The share link asks my friend to sign in", "kind": "problem", "name": "Ada", "page": "/board/123"}'`;
+
+  async function source(body: object, done: string) {
+    setBusy(true);
+    try { const r = await post<{ out: { id: string } }>("/api/sources", body); await refresh(); toast(done); return r.out; }
+    catch (e) { toast((e as Error).message); return null; }
+    finally { setBusy(false); }
+  }
+  const mask = (k: string) => `${k.slice(0, 8)}${"•".repeat(10)}${k.slice(-4)}`;
 
   async function importChalk() {
     setBusy(true);
@@ -68,18 +80,33 @@ export default function ConnectPage() {
       </div>
 
       <div className="panel">
+        <div className="lhead" style={{ borderRadius: "10px 10px 0 0" }}><Plug size={13} />Connections<span className="muted" style={{ fontWeight: 400 }}>{(s.sources ?? []).length}</span><span className="spacer" /><span className="small muted" style={{ fontWeight: 400 }}>Feedback is routed to this workspace by its key</span></div>
         {(s.sources ?? []).map((src) => (
-          <div key={src.id} className="src-row">
+          <div key={src.id} className="src-row" style={{ gridTemplateColumns: "34px 1fr auto", background: src.id === web?.id ? "var(--hover)" : undefined, cursor: src.kind !== "chalk" ? "pointer" : undefined }} onClick={() => src.kind !== "chalk" && setSel(src.id)}>
             <span className="src-ic">{src.kind === "widget" ? <Globe size={16} /> : src.kind === "chalk" ? <FileText size={16} /> : <Server size={16} />}</span>
-            <div>
-              <div style={{ fontWeight: 500 }}>{src.name}</div>
-              <div className="small muted">{src.kind === "widget" ? "Feedback widget and API" : "Imports chalk’s own Report a problem log"} · {src.count} {src.count === 1 ? "note" : "notes"}{src.lastAt ? ` · last ${ago(src.lastAt)}` : ""}</div>
+            <div style={{ minWidth: 0 }}>
+              <div className="row" style={{ gap: 8 }}><span style={{ fontWeight: 500 }}>{src.name}</span>{src.id === web?.id && <span className="pill info" style={{ height: 20 }}>Shown below</span>}</div>
+              <div className="small muted clip">
+                {src.kind === "chalk" ? "Imports chalk’s own Report a problem log" : <span className="mono">{shown === src.id ? src.key : mask(src.key)}</span>} · {src.count} {src.count === 1 ? "note" : "notes"}{src.lastAt ? ` · last ${ago(src.lastAt)}` : ""}
+              </div>
             </div>
-            {src.kind === "chalk"
-              ? <button className="btn sm" disabled={busy} onClick={importChalk}>{busy ? <Dots /> : <Download size={13} />}Import now</button>
-              : <span className="pill good"><span className="dot" />Connected</span>}
+            {src.kind === "chalk" ? (
+              <button className="btn sm" disabled={busy} onClick={importChalk}>{busy ? <Dots /> : <Download size={13} />}Import now</button>
+            ) : (
+              <span className="row" style={{ gap: 2 }} onClick={(e) => e.stopPropagation()}>
+                <button className="icon-btn" title={shown === src.id ? "Hide key" : "Show key"} onClick={() => setShown(shown === src.id ? null : src.id)} aria-label="Show key"><Eye size={14} /></button>
+                <button className="icon-btn" title="Copy key" onClick={async () => { await navigator.clipboard.writeText(src.key); toast("Key copied."); }} aria-label="Copy key"><Copy size={14} /></button>
+                <button className="icon-btn" title="Rotate key — the old one stops working at once" disabled={busy} onClick={() => confirm(`Rotate the key for ${src.name}? Anything still using the old key stops working.`) && source({ action: "rotate", id: src.id }, "New key issued — update your app.")} aria-label="Rotate key"><RefreshCw size={14} /></button>
+                <button className="icon-btn" title="Remove connection" disabled={busy} onClick={() => confirm(`Remove ${src.name}? Its key stops working; notes it already sent stay.`) && source({ action: "remove", id: src.id }, `${src.name} removed.`)} aria-label="Remove connection"><Trash2 size={14} /></button>
+              </span>
+            )}
           </div>
         ))}
+        <div className="src-row" style={{ gridTemplateColumns: "34px 1fr auto" }}>
+          <span className="src-ic"><Plus size={16} /></span>
+          <input className="input" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Name a new connection — e.g. iOS app, support inbox" />
+          <button className="btn sm" disabled={busy || !newName.trim()} onClick={async () => { const out = await source({ action: "create", name: newName }, `${newName} connected — its key is ready.`); if (out) { setSel(out.id); setNewName(""); } }}>Create</button>
+        </div>
       </div>
 
       <div className="grid-2" style={{ marginTop: 22, alignItems: "start", gridTemplateColumns: "minmax(0, 1.05fr) minmax(0, 1fr)" }}>
@@ -103,7 +130,7 @@ export default function ConnectPage() {
 
         <div className="stack">
           <div className="row between"><h3>Try it — {product} with the button added</h3><span className="small muted">Live</span></div>
-          <div id="heard-preview" className="preview">
+          <div id="dumpling-preview" className="preview">
             <div style={{ display: "flex", alignItems: "center", gap: 6, height: 34, padding: "0 12px", borderBottom: "1px solid #e6e6ea", background: "#fff" }}>
               <i style={{ width: 9, height: 9, borderRadius: 5, background: "#ff5f57" }} /><i style={{ width: 9, height: 9, borderRadius: 5, background: "#febc2e" }} /><i style={{ width: 9, height: 9, borderRadius: 5, background: "#28c840" }} />
               <span className="small" style={{ marginLeft: 10, color: "#8b8d97" }}>{product}{product.toLowerCase() === "chalk" ? " · How do vaccines train the immune system?" : ""}</span>

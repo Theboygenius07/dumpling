@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Check, CircleCheck, ExternalLink, Lightbulb, ListChecks, Lock, Monitor, Send, TriangleAlert, X } from "lucide-react";
 import type { Analysis, Feedback, Script, Step, Verdict } from "@/lib/types";
-import { Avatar, Dots, EVIDENCE, DumplingMark, KIND, Meter, post, testerOf, useStore, type State } from "../ui";
+import { Avatar, Dots, Empty, EVIDENCE, DumplingMark, KIND, Meter, post, testerOf, useStore, type State } from "../ui";
 
 type Similar = { id: string; summary: string; count: number; ticketId: string | null; score: number; sameStep: boolean };
 type Coach = { analysis: Analysis | null; similar: Similar[] };
@@ -18,11 +18,13 @@ const CHOICES: { v: Verdict; label: string; hint: string; icon: React.ReactNode;
 export default function TestPage() {
   const { s, testerId } = useStore();
   if (!s) return <div className="page empty"><Dots /></div>;
-  return <Runner key={testerId} s={s} testerId={testerId} />;
+  if (!s.scripts.length) return <div className="page panel"><Empty icon={<ListChecks size={18} />} title="No test scripts yet">Write the steps testers will follow in <Link className="link" href="/settings?tab=scripts">Settings › Test scripts</Link>.</Empty></div>;
+  if (!testerOf(s, testerId)) return <div className="page panel"><Empty icon={<ListChecks size={18} />} title="No testers yet">Add the people testing {s.cycle.product} in <Link className="link" href="/settings?tab=people">Settings › People</Link>, then pick one at the bottom left.</Empty></div>;
+  return <Runner key={`${s.workspace}:${testerId}`} s={s} testerId={testerId} />;
 }
 
 function Runner({ s, testerId }: { s: State; testerId: string }) {
-  const [scriptId, setScriptId] = useState("s_board");
+  const [scriptId, setScriptId] = useState(s.scripts[0]!.id);
   const [local, setLocal] = useState<Record<string, Verdict>>({});
   const tester = testerOf(s, testerId)!;
 

@@ -1,5 +1,5 @@
 import { contextFor, draftReply, draftTicket } from "@/lib/ai";
-import { change } from "@/lib/store";
+import { change, read, wsOf } from "@/lib/store";
 import type { Store, TicketDraft } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -47,8 +47,9 @@ export async function POST(req: Request) {
   const b = (await req.json().catch(() => null)) as { groupId?: string; feedbackId?: string; purpose?: string; fresh?: boolean; reason?: string } | null;
   if (!b) return Response.json({ message: "Nothing to draft." }, { status: 400 });
 
+  const ws = await wsOf(req);
   if (b.groupId) {
-    const out = await change(async (s) => {
+    const out = await change(ws, async (s) => {
       const g = s.groups.find((x) => x.id === b.groupId);
       if (!g) throw new Error("No such group");
       if (g.draft && !b.fresh) return g.draft;
@@ -60,8 +61,7 @@ export async function POST(req: Request) {
   }
 
   if (b.feedbackId && b.purpose) {
-    const { read } = await import("@/lib/store");
-    const s = await read();
+    const s = await read(ws);
     const f = s?.feedback.find((x) => x.id === b.feedbackId);
     if (!s || !f) return Response.json({ message: "That note isn’t here any more." }, { status: 404 });
     const g = s.groups.find((x) => x.id === f.groupId);

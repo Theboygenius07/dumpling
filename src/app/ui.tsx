@@ -3,13 +3,16 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { Check } from "lucide-react";
 import type { Analysis, Feedback, Group, Kind, Link, Severity, Store, Tester, Ticket } from "@/lib/types";
 
-export type State = Store & { model: boolean };
+export type WorkspaceRef = { id: string; name: string; createdAt: string };
+export type State = Store & { model: boolean; workspace: string; workspaces: WorkspaceRef[] };
 
 // ---------- one store, one poll, for the whole app ----------
 
 type Ctx = {
   s: State | null;
   empty: boolean;
+  workspaces: WorkspaceRef[];
+  switchTo: (id: string) => Promise<void>;
   refresh: () => Promise<State | null>;
   testerId: string;
   setTesterId: (id: string) => void;
@@ -20,13 +23,15 @@ const StoreCtx = createContext<Ctx | null>(null);
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [s, setS] = useState<State | null>(null);
   const [empty, setEmpty] = useState(false);
+  const [workspaces, setWorkspaces] = useState<WorkspaceRef[]>([]);
   const [testerId, setTester] = useState("t_grace");
   const [msg, setMsg] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     const r = await fetch("/api/state", { cache: "no-store" }).then((r) => r.json()).catch(() => null);
     if (!r) return null;
-    if (r.empty) { setEmpty(true); return null; }
+    setWorkspaces(r.workspaces ?? []);
+    if (r.empty) { setEmpty(true); setS(null); return null; }
     setEmpty(false);
     setS(r);
     return r as State;
@@ -50,7 +55,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     try { localStorage.setItem("dumpling.tester", id); } catch {}
   }, []);
 
-  const value = useMemo(() => ({ s, empty, refresh, testerId, setTesterId, toast: setMsg }), [s, empty, refresh, testerId, setTesterId]);
+  const switchTo = useCallback(async (id: string) => {
+    await fetch("/api/workspaces", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ select: id }) });
+    await refresh();
+  }, [refresh]);
+
+  // A tester chosen in another workspace doesn't exist here: fall back to this one's first.
+  const effectiveTester = s && !s.testers.some((t) => t.id === testerId) ? (s.testers.find((t) => t.id.startsWith("t_"))?.id ?? "") : testerId;
+  const value = useMemo(() => ({ s, empty, workspaces, switchTo, refresh, testerId: effectiveTester, setTesterId, toast: setMsg }), [s, empty, workspaces, switchTo, refresh, effectiveTester, setTesterId]);
   return (
     <StoreCtx.Provider value={value}>
       {children}

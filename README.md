@@ -31,6 +31,13 @@ Dumpling follows one bug all the way through, from the tester who hits it to the
 | **Everyone** | Insights | Where testing hurts (problems per script step), where every note went, whether every tester heard back, and **how often the manager agreed with Dumpling**. Every overrule is kept. |
 | **Your app** | Connect your app | One script tag adds a feedback button to any web app, and an intake API takes feedback from your server. Notes from real users land in the same queue, grouped with testers' reports. |
 
+## Workspaces, people and connections
+
+- **Workspaces.** One per product. Create one from the switcher at the top left with the product name, a few words on what it is (Dumpling reads every note with this in mind), a ticket prefix, and where testers open it. Your choice of workspace is remembered per browser, so two people can work in two workspaces at once.
+- **People.** Add testers with their browser, OS and device in *Settings › People*; their setup is attached to every note they send. Anyone who has sent notes stays on the record.
+- **Test scripts.** Write the steps testers follow, each with what should happen, in *Settings › Test scripts*. Steps that testers have reported on can be reworded but not deleted.
+- **Connections.** In *Connect your app*, each workspace can have as many connections as you like (web app, iOS app, support inbox…). Each has its own key, which you can show, copy, rotate (the old key stops working at once) or remove. Feedback is routed to the right workspace by its key alone.
+
 ## A person decides every step
 
 These rules are enforced on the server, not just in the interface:
@@ -61,7 +68,7 @@ cp .env.example .env.local      # add OPENAI_API_KEY (optional)
 npm run dev                     # http://localhost:4100
 ```
 
-Open **Insights** and press **Reset demo** to load the chalk beta cycle: 21 notes from six testers, already read and grouped. Then follow one bug through:
+On first run, choose **Open the chalk demo** (or start your own workspace). The demo is the chalk beta cycle: 21 notes from six testers, already read and grouped. Then follow one bug through:
 
 1. **Run tests** as Grace: mark steps 1–2 *It worked*, step 3 *It didn't work*, and type what happened.
 2. **Review:** add Femi's note to the case, ask Chen a question, and create the ticket.
@@ -99,24 +106,25 @@ src/lib/
   ai.ts         the model calls (read, compare, draft); falls back to rules without a key
   triage.ts     read → embed → link → group: proposals only
   decide.ts     every human decision; one action, one target, nothing else changes state
-  store.ts      one JSON file, writes queued so decisions never overwrite each other
   sources.ts    app connections and their keys
+  store.ts      one JSON file per workspace; writes queued so decisions never overwrite each other
 src/app/
   test/  notes/          tester views
   review/  ideas/  insights/   UAT manager views
   tickets/               developer view
-  connect/  settings/    workspace
-  api/                   route handlers (state, feedback, coach, decide, draft, reply, intake, …)
+  connect/  settings/  workspaces/new/    workspace
+  api/                   route handlers: state, feedback, coach, decide, draft, reply, intake,
+                         workspaces, people, scripts, sources, workspace, seed
 public/widget.js         the drop-in feedback widget
 ```
 
-Built with Next.js 16, React 19 and TypeScript; OpenAI for reading and drafting. Storage is a JSON file, which is enough for a prototype; it would be a database once hosted.
+Built with Next.js 16, React 19 and TypeScript; OpenAI for reading and drafting. Storage is one JSON file per workspace (`data/workspaces/`), which is enough for a prototype; it would be a database once hosted.
 
 ## Status
 
 A working prototype built for the AI Studio Hackathon's "UAT, Untangled" challenge.
 
 Not built yet:
-- sign-in and real roles (today anyone with the URL can switch between tester, manager and developer);
+- sign-in and real roles (today anyone with the URL can switch workspaces and act as tester, manager or developer);
 - pushing tickets straight into GitHub or Jira (today you copy them);
 - hosted storage.

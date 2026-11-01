@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import { ensureSources } from "@/lib/sources";
-import { change, uid } from "@/lib/store";
+import { change, uid, wsOf } from "@/lib/store";
 import { ack, triage } from "@/lib/triage";
 import type { Feedback } from "@/lib/types";
 
@@ -12,7 +12,7 @@ export const maxDuration = 300;
 // so reports from real use land in the same review queue as scripted testing.
 const FIELD = "t_field";
 
-export async function POST() {
+export async function POST(req: Request) {
   const file = process.env.CHALK_REPORTS;
   if (!file) return Response.json({ message: "Set CHALK_REPORTS to chalk’s support.jsonl." }, { status: 400 });
   let lines: { at: string; topic: string; message: string; page?: string | null; platform?: string }[] = [];
@@ -21,7 +21,7 @@ export async function POST() {
   } catch {
     return Response.json({ imported: 0, message: "No reports from chalk yet — use Report a problem in chalk’s rail, then import." });
   }
-  const imported = await change(async (s) => {
+  const imported = await change(await wsOf(req), async (s) => {
     if (!s.testers.some((t) => t.id === FIELD)) s.testers.push({ id: FIELD, name: "chalk user (Report a problem)", env: { browser: "chalk app", os: "—", device: "—" } });
     const have = new Set(s.feedback.filter((f) => f.source === "chalk-report").map((f) => `${f.at}|${f.text}`));
     let n = 0;

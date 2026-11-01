@@ -1,14 +1,18 @@
+import { randomBytes } from "node:crypto";
 import type { Source, Store, Tester } from "./types";
 
 // A prototype runs on one Mac, so the demo key is fixed: a reset must not
 // break a widget already pasted into chalk. A hosted Dumpling issues one per source.
 export const DEMO_KEY = process.env.DUMPLING_KEY || "dmp_chalk_demo_4f9a2c";
 
-export function ensureSources(s: Store) {
+/** A fresh connection key: unguessable, and recognisable as Dumpling's in a config file. */
+export const newKey = () => `dmp_${randomBytes(18).toString("base64url")}`;
+
+export function ensureSources(s: Store, demo = false) {
   if (s.sources?.length) return s.sources;
   const at = new Date().toISOString();
   s.sources = [
-    { id: "src_web", name: `${s.cycle.product} web app`, kind: "widget", key: DEMO_KEY, createdAt: at, count: 0, lastAt: null },
+    { id: "src_web", name: `${s.cycle.product} web app`, kind: "widget", key: demo ? DEMO_KEY : newKey(), createdAt: at, count: 0, lastAt: null },
     // chalk's own Report a problem log: a connector only the chalk workspace has.
     ...(s.cycle.product.toLowerCase() === "chalk" ? [{ id: "src_chalk_reports", name: "chalk · Report a problem", kind: "chalk" as const, key: "", createdAt: at, count: s.feedback.filter((f) => f.source === "chalk-report").length, lastAt: null }] : []),
   ];

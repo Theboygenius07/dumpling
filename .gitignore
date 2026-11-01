@@ -11,6 +11,8 @@ next-env.d.ts
 
 # local data: the live workspace, voiceover takes, rendered videos
 data/store.json
+data/workspaces/
+data/workspaces.json
 data/*.tmp
 data/voice/
 data/voice-old/
