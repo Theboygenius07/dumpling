@@ -9,6 +9,8 @@ import type { Store } from "./types";
 //   wsmeta/<id>  → its name and when it began (the switcher's list)
 //   keys/<key>   → which workspace an app connection's key belongs to
 export const DEMO_WS = "ws_chalk";
+/** The shared chalk demo, or a visitor's private copy of it. */
+export const isDemo = (ws: string) => ws === DEMO_WS || ws.startsWith("ws_demo_");
 export const WS_COOKIE = "dumpling_ws";
 
 export type WorkspaceRef = { id: string; name: string; createdAt: string };

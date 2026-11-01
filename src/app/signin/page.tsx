@@ -27,7 +27,7 @@ export default function SignInPage() {
         {err && <p className="small" style={{ color: "var(--bug)" }}>{err}</p>}
         <button className="btn primary lg block" disabled={busy || !email || !password}>{busy ? <Dots /> : <>Sign in <ArrowRight size={14} /></>}</button>
       </form>
-      <p className="small muted" style={{ textAlign: "center" }}>New here? <Link className="link" href="/signup">Create an account</Link></p>
+      <p className="small muted" style={{ textAlign: "center" }}>New here? <Link className="link" href="/signup">Create an account</Link> · or <Link className="link" href="/">try the chalk demo</Link></p>
     </AuthFrame>
   );
 }

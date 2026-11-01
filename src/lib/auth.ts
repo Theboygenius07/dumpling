@@ -34,12 +34,18 @@ async function hashPassword(pw: string, salt = randomBytes(16)) {
 
 export class AuthError extends Error {}
 
-export async function signUp(email: string, name: string, password: string): Promise<User> {
+/** A guest for the demo: a real account with an unguessable address and password, which simply expires with its session. */
+export async function guestUser(): Promise<User> {
+  return signUp(`guest-${randomBytes(6).toString("hex")}@demo.dumpling`, "Guest", randomBytes(24).toString("base64url"), { guest: true });
+}
+
+export async function signUp(email: string, name: string, password: string, opts: { guest?: boolean } = {}): Promise<User> {
   const e = norm(email);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) throw new AuthError("That doesn’t look like an email address.");
   if (!name.trim()) throw new AuthError("Tell us your name.");
   if (password.length < 8) throw new AuthError("Use at least 8 characters for the password.");
-  const first = (await db().list("users")).length === 0;
+  // Guests never count as the first account.
+  const first = !opts.guest && (await db().list<User>("users")).filter((x) => !x.data.email.endsWith("@demo.dumpling")).length === 0;
   const user = await db().tx(async (t) => {
     if (await t.get("emails", e)) throw new AuthError("There’s already an account with that email — sign in instead.");
     const u: User = { id: `u_${randomBytes(6).toString("hex")}`, email: e, name: name.trim().slice(0, 60), ...(await hashPassword(password)), createdAt: new Date().toISOString() };
@@ -48,7 +54,7 @@ export async function signUp(email: string, name: string, password: string): Pro
     return u;
   });
   // The very first account looks after every workspace that already exists.
-  if (first) for (const { id } of await workspaceRefs()) await addMember(id, user.id, "manager");
+  if (first && !opts.guest) for (const { id } of await workspaceRefs()) await addMember(id, user.id, "manager");
   await acceptInvitesFor(user);
   return user;
 }
@@ -62,10 +68,10 @@ export async function signIn(email: string, password: string): Promise<User | nu
   return timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(u.hash, "hex")) ? u : null;
 }
 
-export async function createSession(userId: string): Promise<string> {
+export async function createSession(userId: string, days = DAYS): Promise<string> {
   const token = randomBytes(32).toString("base64url");
   const at = new Date();
-  await db().put<Session>("sessions", sha(token), { userId, createdAt: at.toISOString(), expiresAt: new Date(at.getTime() + DAYS * 86_400_000).toISOString() });
+  await db().put<Session>("sessions", sha(token), { userId, createdAt: at.toISOString(), expiresAt: new Date(at.getTime() + days * 86_400_000).toISOString() });
   return token;
 }
 
@@ -82,9 +88,9 @@ export async function userFrom(req: Request): Promise<User | null> {
   return db().get<User>("users", s.userId);
 }
 
-export function sessionCookie(token: string, req: Request) {
+export function sessionCookie(token: string, req: Request, days = DAYS) {
   const secure = new URL(req.url).protocol === "https:" ? "; Secure" : "";
-  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${DAYS * 86400}${secure}`;
+  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${days * 86400}${secure}`;
 }
 export const clearSessionCookie = `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
 

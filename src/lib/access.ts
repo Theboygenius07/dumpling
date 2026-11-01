@@ -1,6 +1,6 @@
 import { publicUser, roleOf, userFrom, workspacesOf, type PublicUser, type Role, type User } from "./auth";
 import { envFrom } from "./sources";
-import { DEMO_WS, WS_COOKIE, cookieOf, uid } from "./store";
+import { WS_COOKIE, cookieOf, isDemo, uid } from "./store";
 import type { Store } from "./types";
 
 // Every route asks one question before it does anything: who is this, in which
@@ -42,7 +42,7 @@ export const isSample = (s: Store, id: string) => s.cycle && s.testers.some((t) 
  * record is made the first time they test, with their setup read from the browser.
  */
 export function testerFor(s: Store, a: Access, req: Request, asked?: string | null, create = true): string | null {
-  if (a.ws === DEMO_WS && a.role === "manager" && asked && isSample(s, asked)) return asked;
+  if (isDemo(a.ws) && a.role === "manager" && asked && isSample(s, asked)) return asked;
   const own = s.testers.find((t) => t.userId === a.user.id);
   if (own) return own.id;
   if (!create) return null;
@@ -54,7 +54,7 @@ export function testerFor(s: Store, a: Access, req: Request, asked?: string | nu
 /** What each role is shown. Secrets never leave the server; testers see their own notes. */
 export function viewFor(s: Store, a: Access): Store & { me: PublicUser & { role: Role; testerId: string | null }; demo: boolean } {
   const me = { ...publicUser(a.user), role: a.role, testerId: s.testers.find((t) => t.userId === a.user.id)?.id ?? null };
-  const demo = a.ws === DEMO_WS;
+  const demo = isDemo(a.ws);
   const base = { ...s, feedback: s.feedback.map(({ embedding: _e, ...f }) => f), me, demo };
   if (a.role === "manager") return base;
   const sources: Store["sources"] = [];

@@ -35,7 +35,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (!res) return null;
     // Signed out (or the session ended elsewhere): go to sign-in, unless already on an account page.
     if (res.status === 401) {
-      if (!/^\/(signin|signup)/.test(location.pathname)) location.href = `/signin?next=${encodeURIComponent(location.pathname)}`;
+      if (location.pathname !== "/" && !/^\/(signin|signup)/.test(location.pathname)) location.href = `/signin?next=${encodeURIComponent(location.pathname)}`;
       return null;
     }
     const r = await res.json().catch(() => null);
@@ -50,7 +50,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try { const saved = localStorage.getItem("dumpling.tester"); if (saved) setTester(saved); } catch {}
-    if (/^\/(signin|signup)/.test(location.pathname)) return;
+    if (location.pathname === "/" || /^\/(signin|signup)/.test(location.pathname)) return;
     refresh();
     const t = setInterval(refresh, 4000);
     return () => clearInterval(t);

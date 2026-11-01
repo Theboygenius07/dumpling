@@ -21,7 +21,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const role = roleOf(path);
   const { s, empty, testerId } = useStore();
   // The voiceover recorder and the account pages are full-screen, outside the app frame.
-  if (path.startsWith("/voice") || path.startsWith("/signin") || path.startsWith("/signup")) return <>{children}</>;
+  if (path === "/" || path.startsWith("/voice") || path.startsWith("/signin") || path.startsWith("/signup")) return <>{children}</>;
   // A fresh install has no workspace yet: welcome, except on the page that makes one.
   if (empty && !path.startsWith("/workspaces")) return <Welcome />;
 
@@ -126,7 +126,7 @@ function WorkspaceSwitcher() {
           ))}
           <div className="hr" style={{ margin: "5px 0" }} />
           <button role="menuitem" onClick={() => { setOpen(false); router.push("/workspaces/new"); }}><Plus size={14} /><span style={{ fontSize: 13 }}>New workspace</span></button>
-          {!workspaces.some((w) => w.id === "ws_chalk") && (
+          {!workspaces.some((w) => w.id === "ws_chalk" || w.id.startsWith("ws_demo_")) && (
             <button role="menuitem" onClick={async () => { setOpen(false); await fetch("/api/seed", { method: "POST" }); await refresh(); router.push("/insights"); }}><DumplingMark size={14} /><span style={{ fontSize: 13 }}>Open the chalk demo</span></button>
           )}
         </div>
