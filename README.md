@@ -4,7 +4,7 @@
 
 Testers say what went wrong in their own words. Dumpling folds the same bug, reported five different ways, into one ticket, and asks a kind question when a note is too thin to act on. It keeps every tester posted on what happened to their note. A person decides every step: Dumpling proposes, it never approves.
 
-Dumpling works with any product. The demo workspace is **chalk**, an AI teaching whiteboard, tested in its beta with real flows and labels.
+Dumpling works with any product. The demo workspace is **chalk**, an AI teaching whiteboard. Its test cycle is made up: every tester and every note is invented.
 
 ---
 

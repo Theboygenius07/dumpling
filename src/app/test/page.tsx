@@ -77,7 +77,7 @@ function Runner({ s, testerId }: { s: State; testerId: string }) {
             <h1 style={{ marginTop: 6 }}>{script.title}</h1>
             <p>Follow each step in {s.cycle.product}, then tell us how it went. There are no wrong answers.</p>
           </div>
-          <a className="btn" href={s.cycle.productUrl} target="_blank" rel="noreferrer">Open {s.cycle.product} <ExternalLink size={14} /></a>
+          {s.cycle.productUrl && <a className="btn" href={s.cycle.productUrl} target="_blank" rel="noreferrer">Open {s.cycle.product} <ExternalLink size={14} /></a>}
         </div>
         <div className="row" style={{ marginBottom: 22 }}>
           <div className="progress grow" style={{ height: 6 }}><i style={{ width: `${(done / script.steps.length) * 100}%` }} /></div>

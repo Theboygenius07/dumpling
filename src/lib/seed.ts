@@ -1,10 +1,10 @@
 import type { Feedback, Script, Store, Tester, Verdict } from "./types";
 
-// The product under test is chalk (trychalk.tech): a real UAT cycle for its
-// beta, written against chalk's real labels ("Draw it", "Plan my course",
-// "Record"). The feedback below is invented, but it is messy the way
-// real UAT feedback is: one bug reported several ways, notes too thin
-// to fix from, ideas mixed in with bugs.
+// The product under test is chalk, an AI teaching whiteboard. The cycle is made
+// up: every tester and note is invented, and the scripts use only chalk's public
+// feature names ("Draw it", "Plan my course", "Record"). It is messy the way real
+// UAT feedback is: one bug reported several ways, notes too thin to fix from,
+// ideas mixed in with bugs.
 
 export const testers: Tester[] = [
   { id: "t_ada", name: "Ada Okafor", env: { browser: "Chrome 141", os: "macOS 26", device: "MacBook Air" } },
@@ -22,7 +22,7 @@ export const scripts: Script[] = [
     title: "Draw your first board",
     area: "Board",
     steps: [
-      { id: "b1", n: 1, action: "Sign in with the six-digit code chalk emails you.", expected: "You land on Home within a minute of asking for the code." },
+      { id: "b1", n: 1, action: "Sign in to chalk.", expected: "You land on Home." },
       { id: "b2", n: 2, action: "Type “How do vaccines train the immune system?” and press Draw it.", expected: "The cursor starts placing the first section within 10 seconds." },
       { id: "b3", n: 3, action: "Wait for the board to finish drawing.", expected: "Every section appears with its diagrams, and chalk offers the walkthrough." },
       { id: "b4", n: 4, action: "Press play on the walkthrough.", expected: "The cursor walks each section in order and reads it aloud." },
@@ -47,7 +47,7 @@ export const scripts: Script[] = [
     steps: [
       { id: "r1", n: 1, action: "Press Record and allow the microphone.", expected: "A timer starts counting." },
       { id: "r2", n: 2, action: "Talk for about a minute, then press Stop.", expected: "Notes of what you said appear within two minutes." },
-      { id: "r3", n: 3, action: "Open Settings › Plan & usage.", expected: "This week’s credits are shown." },
+      { id: "r3", n: 3, action: "Open the recording’s notes.", expected: "The notes cover the whole recording." },
     ],
   },
 ];
@@ -77,8 +77,8 @@ const raw: Raw[] = [
   ["t_chen", "s_course", "c1", "off", "weird", 170],
   ["t_femi", "s_record", "r1", "failed", "doesn't work", 90],
 
-  // Not a bug: chalk shows credits in Settings only, on purpose.
-  ["t_femi", "s_record", "r3", "off", "I couldn't see how many credits the board cost anywhere on the board itself, I had to go to settings.", 80],
+  // An idea, not a bug.
+  ["t_femi", "s_record", "r3", "idea", "Could the notes turn into a short quiz I can give my class?", 80],
 
   // Ideas, not bugs.
   ["t_ada", "s_board", "b3", "idea", "Would love to export the board as a PDF to hand out.", 220],
@@ -116,7 +116,7 @@ export function seed(): Store {
       product: "chalk",
       productAbout: "an AI teaching whiteboard",
       ticketPrefix: "CH",
-      productUrl: "https://www.trychalk.tech",
+      productUrl: "",
       startedAt: at(60 * 26),
       endsAt: new Date(Date.now() + 2 * 86_400_000).toISOString(),
     },
