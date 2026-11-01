@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
-import { Check, Copy, Sparkles, Ticket as TicketIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowUpRight, Check, Copy, Send, Sparkles, Ticket as TicketIcon } from "lucide-react";
 import type { Ticket } from "@/lib/types";
-import { Avatar, Dots, Empty, Priority, SEV, Status, ago, fbOf, stepOf, testerOf, useStore, type State } from "../ui";
+import { ticketMarkdown } from "@/lib/ticketText";
+import { Avatar, Dots, Empty, Priority, SEV, Status, ago, fbOf, post, stepOf, testerOf, useStore, type State } from "../ui";
 
 export default function TicketsPage() {
   const { s } = useStore();
@@ -43,31 +44,7 @@ export default function TicketsPage() {
   );
 }
 
-function markdown(s: State, t: Ticket) {
-  const w = t.witnessIds.map((id) => fbOf(s, id)!).filter(Boolean);
-  return [
-    `## ${t.id}: ${t.title}`,
-    `**Severity:** ${t.severity} — ${t.severityWhy}`,
-    "",
-    "### Steps to reproduce",
-    ...t.steps.map((x, i) => `${i + 1}. ${x}`),
-    "",
-    `**Expected:** ${t.expected}`,
-    `**Actual:** ${t.actual}`,
-    "",
-    `### Seen by ${w.length} ${w.length === 1 ? "tester" : "testers"}`,
-    "| Tester | Browser | OS | Device | Their words |",
-    "|---|---|---|---|---|",
-    ...w.map((f) => {
-      const p = testerOf(s, f.testerId);
-      return `| ${p?.name} | ${p?.env.browser} | ${p?.env.os} | ${p?.env.device} | “${f.text.replace(/\|/g, "/")}” |`;
-    }),
-    "",
-    t.notes ? `**Notes:** ${t.notes}` : "",
-    "",
-    `_From UAT (${s.cycle.name}). Drafted by Dumpling, approved by ${t.approvedBy}${t.edited.length ? `, who edited: ${t.edited.join(", ")}` : ""}._`,
-  ].join("\n");
-}
+const markdown = (s: State, t: Ticket) => `## ${t.id}: ${t.title}\n${ticketMarkdown(s, t)}`;
 
 function Issue({ s, t }: { s: State; t: Ticket }) {
   const { toast } = useStore();
@@ -134,7 +111,52 @@ function Issue({ s, t }: { s: State; t: Ticket }) {
         <div className="hr" style={{ margin: "8px 0" }} />
         <div className="prop"><span>Approved by</span><span className="row"><Avatar t={{ name: manager }} size="sm" />{manager}</span></div>
         <div className="prop"><span>Drafted by</span><span className="row"><Sparkles size={13} color="var(--accent)" />Dumpling</span></div>
+        <SendTo t={t} />
       </aside>
     </div>
+  );
+}
+
+type Conn = { github: string | null; jira: string | null; manager: boolean };
+const NAMES = { github: "GitHub", jira: "Jira" } as const;
+
+/** Send the ticket on, or show where it went. Only people who can ship see this; a ticket is sent at most once per place. */
+function SendTo({ t }: { t: Ticket }) {
+  const { refresh, toast } = useStore();
+  const [conn, setConn] = useState<Conn | null>(null);
+  const [busy, setBusy] = useState<"github" | "jira" | null>(null);
+  useEffect(() => { fetch("/api/tickets/push").then((r) => (r.ok ? r.json() : null)).then(setConn).catch(() => {}); }, []);
+  const targets = (["github", "jira"] as const).filter((x) => t.pushed?.[x] || conn?.[x]);
+  if (!conn && !targets.length) return null;
+
+  async function send(target: "github" | "jira") {
+    setBusy(target);
+    try {
+      const r = await post<{ ref: string; url: string }>("/api/tickets/push", { ticketId: t.id, target });
+      await refresh();
+      toast(`Sent to ${NAMES[target]} as ${r.ref}.`);
+    } catch (e) { toast((e as Error).message); } finally { setBusy(null); }
+  }
+
+  return (
+    <>
+      <div className="hr" style={{ margin: "8px 0" }} />
+      {targets.map((x) => {
+        const done = t.pushed?.[x];
+        return (
+          <div key={x} className="prop">
+            <span>{NAMES[x]}</span>
+            {done ? (
+              <a className="link row" style={{ gap: 3 }} href={done.url} target="_blank" rel="noreferrer">{done.ref}<ArrowUpRight size={12} /></a>
+            ) : (
+              <button className="btn sm" disabled={!!busy} onClick={() => send(x)}>{busy === x ? <Dots /> : <Send size={12} />}Send to {conn?.[x]}</button>
+            )}
+          </div>
+        );
+      })}
+      {!targets.length && conn?.manager && (
+        <div className="prop"><span>Send to</span><Link href="/settings?tab=integrations" className="link small">Connect GitHub or Jira</Link></div>
+      )}
+    </>
   );
 }

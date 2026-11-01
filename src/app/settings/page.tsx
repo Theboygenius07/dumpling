@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Check, ListChecks, Plus, Settings2, Trash2, UserPlus, Users } from "lucide-react";
+import { Check, ExternalLink, ListChecks, Plug, Plus, Settings2, Trash2, UserPlus, Users } from "lucide-react";
 import type { Script } from "@/lib/types";
 import { Avatar, Dots, Empty, post, useStore, type State } from "../ui";
 
-type Tab = "workspace" | "people" | "scripts";
+type Tab = "workspace" | "people" | "scripts" | "integrations";
+const TABS: Tab[] = ["workspace", "people", "scripts", "integrations"];
 
 export default function SettingsPage() {
   const { s } = useStore();
@@ -12,7 +13,7 @@ export default function SettingsPage() {
   // Read the tab from the URL without useSearchParams, so the page stays statically renderable.
   useEffect(() => {
     const t = new URLSearchParams(location.search).get("tab");
-    if (t === "people" || t === "scripts" || t === "workspace") setTab(t);
+    if (TABS.includes(t as Tab)) setTab(t as Tab);
   }, []);
   if (!s) return <div className="page empty"><Dots /></div>;
   const go = (t: Tab) => { setTab(t); history.replaceState(null, "", `/settings?tab=${t}`); };
@@ -22,17 +23,19 @@ export default function SettingsPage() {
       <div className="head">
         <div>
           <h1>Settings</h1>
-          <p>Everything about the {s.cycle.product} workspace: the product, the people testing it, and the scripts they run.</p>
+          <p>Everything about the {s.cycle.product} workspace: the product, the people testing it, the scripts they run and where tickets go.</p>
         </div>
       </div>
-      <div className="seg" style={{ maxWidth: 420, marginBottom: 18 }} role="tablist">
+      <div className="seg" style={{ maxWidth: 560, marginBottom: 18 }} role="tablist">
         <button role="tab" aria-selected={tab === "workspace"} className={tab === "workspace" ? "on" : ""} onClick={() => go("workspace")}><Settings2 size={13} />Workspace</button>
         <button role="tab" aria-selected={tab === "people"} className={tab === "people" ? "on" : ""} onClick={() => go("people")}><Users size={13} />People</button>
         <button role="tab" aria-selected={tab === "scripts"} className={tab === "scripts" ? "on" : ""} onClick={() => go("scripts")}><ListChecks size={13} />Test scripts · {s.scripts.length}</button>
+        <button role="tab" aria-selected={tab === "integrations"} className={tab === "integrations" ? "on" : ""} onClick={() => go("integrations")}><Plug size={13} />Integrations</button>
       </div>
       {tab === "workspace" && <WorkspaceTab s={s} />}
       {tab === "people" && <PeopleTab s={s} />}
       {tab === "scripts" && <ScriptsTab key={s.workspace} s={s} />}
+      {tab === "integrations" && <IntegrationsTab key={s.workspace} />}
     </div>
   );
 }
@@ -208,6 +211,93 @@ function ScriptsTab({ s }: { s: State }) {
           try { await post("/api/scripts", { scripts: list }); await refresh(); toast("Scripts saved — testers see them now."); } catch (e) { toast((e as Error).message); } finally { setBusy(false); }
         }}>{busy ? <Dots /> : <Check size={14} />}Save scripts</button>
       </div>
+    </div>
+  );
+}
+
+// ---------- integrations ----------
+
+type Pub = { github: { repo: string } | null; jira: { baseUrl: string; email: string; projectKey: string } | null };
+type Field = { k: string; label: string; placeholder: string; secret?: boolean; help?: React.ReactNode };
+
+const GITHUB_FIELDS: Field[] = [
+  { k: "repo", label: "Repository", placeholder: "owner/repository" },
+  { k: "token", label: "Token", placeholder: "github_pat_…", secret: true, help: <>A fine-grained token with <b>Issues: read and write</b> on that repository. <a className="link" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">Make one <ExternalLink size={11} /></a></> },
+];
+const JIRA_FIELDS: Field[] = [
+  { k: "baseUrl", label: "Jira site", placeholder: "https://your-team.atlassian.net" },
+  { k: "projectKey", label: "Project key", placeholder: "CH" },
+  { k: "email", label: "Your Atlassian email", placeholder: "you@company.com" },
+  { k: "token", label: "API token", placeholder: "ATATT…", secret: true, help: <>From your Atlassian account’s security settings. <a className="link" href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noreferrer">Make one <ExternalLink size={11} /></a></> },
+];
+
+function IntegrationsTab() {
+  const [pub, setPub] = useState<Pub | null>(null);
+  const load = async () => setPub(await fetch("/api/integrations").then((r) => (r.ok ? r.json() : null)).catch(() => null));
+  useEffect(() => { load(); }, []);
+  if (!pub) return <div className="panel pad"><Dots /></div>;
+  return (
+    <div className="stack-16">
+      <Connector target="github" title="GitHub" blurb="Each approved ticket becomes an issue, labelled uat and its severity." connected={pub.github && `Issues go to ${pub.github.repo}`} fields={GITHUB_FIELDS} onDone={load} />
+      <Connector target="jira" title="Jira" blurb="Each approved ticket becomes a Bug in your project, with the steps and every tester’s words." connected={pub.jira && `Bugs go to ${pub.jira.projectKey} on ${pub.jira.baseUrl.replace(/^https?:\/\//, "")}`} fields={JIRA_FIELDS} onDone={load} />
+      <p className="small muted">Tokens are encrypted before they’re stored and never sent back to a browser. Managers and developers can send an approved ticket; sending it twice never makes a second issue.</p>
+    </div>
+  );
+}
+
+function Connector({ target, title, blurb, connected, fields, onDone }: { target: "github" | "jira"; title: string; blurb: string; connected: string | null; fields: Field[]; onDone: () => Promise<void> }) {
+  const { toast } = useStore();
+  const [open, setOpen] = useState(false);
+  const [f, setF] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState<"test" | "save" | "remove" | null>(null);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const filled = fields.every((x) => (f[x.k] ?? "").trim());
+
+  async function act(action: "test" | "save" | "remove") {
+    setBusy(action); setMsg(null);
+    try {
+      const r = await post<{ message?: string }>("/api/integrations", { action, target, ...f });
+      if (action === "test") setMsg({ ok: true, text: r.message ?? "It works." });
+      else {
+        toast(action === "save" ? (r.message ?? `${title} connected.`) : `${title} disconnected.`);
+        setOpen(false); setF({});
+        await onDone();
+      }
+    } catch (e) {
+      setMsg({ ok: false, text: (e as Error).message });
+    } finally { setBusy(null); }
+  }
+
+  return (
+    <div className="panel">
+      <div className="src-row" style={{ gridTemplateColumns: "1fr auto" }}>
+        <div style={{ minWidth: 0 }}>
+          <div className="row" style={{ gap: 8 }}><b style={{ fontWeight: 500 }}>{title}</b>{connected ? <span className="pill" style={{ color: "var(--good)" }}><Check size={11} />Connected</span> : <span className="pill">Not connected</span>}</div>
+          <div className="small muted" style={{ marginTop: 2 }}>{connected ?? blurb}</div>
+        </div>
+        <div className="row" style={{ gap: 6 }}>
+          {connected && <button className="btn sm" disabled={!!busy} onClick={() => confirm(`Disconnect ${title}? Tickets already sent stay where they are.`) && act("remove")}>{busy === "remove" ? <Dots /> : "Disconnect"}</button>}
+          <button className={`btn sm ${connected ? "" : "primary"}`} onClick={() => { setOpen(!open); setMsg(null); }}>{open ? "Cancel" : connected ? "Change" : `Connect ${title}`}</button>
+        </div>
+      </div>
+      {open && (
+        <div className="pad stack-16" style={{ borderTop: "1px solid var(--border)" }}>
+          <div className="grid-2">
+            {fields.map((x) => (
+              <label key={x.k} className="field" style={x.help ? { gridColumn: "1 / -1" } : undefined}>
+                <span className="label">{x.label}</span>
+                <input className="input" type={x.secret ? "password" : "text"} autoComplete="off" spellCheck={false} value={f[x.k] ?? ""} placeholder={x.placeholder} onChange={(e) => setF({ ...f, [x.k]: e.target.value })} />
+                {x.help && <span className="small muted">{x.help}</span>}
+              </label>
+            ))}
+          </div>
+          {msg && <div className="well small" role="status" style={{ padding: "8px 12px", color: msg.ok ? "var(--good)" : "var(--bug)" }}>{msg.text}</div>}
+          <div className="row" style={{ justifyContent: "flex-end", gap: 8 }}>
+            <button className="btn" disabled={!filled || !!busy} onClick={() => act("test")}>{busy === "test" ? <Dots /> : "Test"}</button>
+            <button className="btn primary" disabled={!filled || !!busy} onClick={() => act("save")}>{busy === "save" ? <Dots /> : <Check size={14} />}Save</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

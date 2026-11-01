@@ -61,7 +61,7 @@ export default function Site() {
     <div className="site">
       <header className="site-nav">
         <div className="site-wrap site-nav-in">
-          <Link href="/" className="site-logo"><span className="ws-mark" style={{ width: 22, height: 22, borderRadius: 6 }}><DumplingMark size={14} /></span>Dumpling</Link>
+          <Link href="/" className="site-logo"><span className="ws-mark" style={{ width: 30, height: 30, borderRadius: 8 }}><DumplingMark size={20} /></span>Dumpling</Link>
           <nav className="site-links">
             <a href="#testing">Product</a><a href="#how">How it works</a><a href="#connect">Connect</a><a href="#insights">Insights</a>
             <a href="https://github.com/Theboygenius07/dumpling">GitHub</a>
@@ -117,7 +117,7 @@ export default function Site() {
 
       <footer className="site-foot">
         <div className="site-wrap site-foot-in">
-          <div><span className="site-logo"><span className="ws-mark" style={{ width: 22, height: 22, borderRadius: 6 }}><DumplingMark size={14} /></span>Dumpling</span><span>UAT feedback, neatly folded.</span></div>
+          <div><span className="site-logo"><span className="ws-mark" style={{ width: 30, height: 30, borderRadius: 8 }}><DumplingMark size={20} /></span>Dumpling</span><span>UAT feedback, neatly folded.</span></div>
           <div><b>Product</b><a href="#testing">Run tests</a><a href="#review">Review</a><a href="#tickets">Tickets</a><a href="#connect">Connect your app</a></div>
           <div><b>Try it</b><button onClick={demo.go}>The chalk demo</button><Link href="/signup">Sign up</Link><Link href="/signin">Log in</Link></div>
           <div><b>Project</b><a href="https://github.com/Theboygenius07/dumpling">Source on GitHub</a><span>AI Studio Hackathon</span><span>UAT, Untangled</span></div>

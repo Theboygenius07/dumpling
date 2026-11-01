@@ -431,7 +431,7 @@ svg { flex: none; }
 .site section[id] { scroll-margin-top: 72px; }
 .site-nav { position: sticky; top: 0; z-index: 30; background: rgba(8, 9, 10, 0.8); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
 .site-nav-in { display: flex; align-items: center; height: 64px; gap: 28px; }
-.site-logo { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+.site-logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 18px; letter-spacing: -0.02em; }
 .site-links { display: flex; gap: 26px; margin: 0 auto; font-size: 13px; color: #8a8f98; }
 .site-links a { transition: color 120ms; }
 .site-links a:hover { color: #f7f8f8; }

@@ -116,6 +116,7 @@ export type Ticket = TicketDraft & {
   draftedBy: "model" | "rules";
   edited: string[]; // which fields the manager changed from the draft
   status: "open" | "in-progress" | "fixed";
+  pushed?: { github?: { url: string; ref: string }; jira?: { url: string; ref: string } };
 };
 
 export type Decision = {

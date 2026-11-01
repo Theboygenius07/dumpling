@@ -26,17 +26,20 @@ Dumpling follows one bug all the way through, from the tester who hits it to the
 | **Tester** | Run tests | A guided runner, one step at a time: *It worked · It didn't work · Something felt off · I have an idea*. Testers write in their own words; browser, device and step are attached for them. While they type, Dumpling says back what it understood, shows whether someone already reported it, and asks **one optional question** if the note is thin. |
 | **Tester** | My notes | A tracker for every note (Sent → Understood → Reviewed → Outcome) and the conversation about it. Testers see where each note went: a ticket, the ideas backlog, an answer, or a question waiting for them. |
 | **UAT manager** | Review | One case at a time. Reports of the same problem are grouped, with Dumpling's read on one line: how sure it is they're one problem, whether there's enough to act on, and how serious it is. Every match shows its reasons, for and against. Doubtful matches sit outside the group as "Not sure — your call". |
-| **Developer** | Tickets | One ticket instead of six duplicates: steps to reproduce, expected vs actual, every reporter's setup and exact words, who drafted it, and who approved it. Copy straight into GitHub or Jira. |
+| **Developer** | Tickets | One ticket instead of six duplicates: steps to reproduce, expected vs actual, every reporter's setup and exact words, who drafted it, and who approved it. Send it to GitHub or Jira in one click, or copy it. |
 | **Product** | Ideas | Non-bug feedback grouped into themes and counted. Everyone who asked is told where their idea went. |
 | **Everyone** | Insights | Where testing hurts (problems per script step), where every note went, whether every tester heard back, and **how often the manager agreed with Dumpling**. Every overrule is kept. |
 | **Your app** | Connect your app | One script tag adds a feedback button to any web app, and an intake API takes feedback from your server. Notes from real users land in the same queue, grouped with testers' reports. |
 
-## Workspaces, people and connections
+## Accounts, workspaces and connections
 
+- **Sign-in and roles.** Email and password (scrypt hashes; sessions are random tokens kept only as hashes, in an HttpOnly cookie). In each workspace a person is a **manager** (reviews, decides, settings), a **tester** (runs tests, sees their own notes) or a **developer** (tickets). The server checks the role on every request; the interface only hides what a role can't use. The very first account manages the workspaces that already exist.
+- **The demo.** *Try the chalk demo* signs a visitor in as a guest with a private copy of the chalk workspace, so visitors never see each other's changes.
 - **Workspaces.** One per product. Create one from the switcher at the top left with the product name, a few words on what it is (Dumpling reads every note with this in mind), a ticket prefix, and where testers open it. Your choice of workspace is remembered per browser, so two people can work in two workspaces at once.
-- **People.** Add testers with their browser, OS and device in *Settings › People*; their setup is attached to every note they send. Anyone who has sent notes stays on the record.
+- **People.** Invite people by email with a role in *Settings › People*. Anyone with an account joins at once; anyone else gets a sign-up link tied to their email. A workspace always keeps at least one manager. A tester's browser, OS and device are attached to every note they send.
 - **Test scripts.** Write the steps testers follow, each with what should happen, in *Settings › Test scripts*. Steps that testers have reported on can be reworded but not deleted.
 - **Connections.** In *Connect your app*, each workspace can have as many connections as you like (web app, iOS app, support inbox…). Each has its own key, which you can show, copy, rotate (the old key stops working at once) or remove. Feedback is routed to the right workspace by its key alone.
+- **GitHub and Jira.** In *Settings › Integrations*, connect a GitHub repository (a fine-grained token with *Issues: read and write*) or a Jira project (site, email, API token). Each connection is tested before it's saved; tokens are encrypted (AES-256-GCM) and never sent to a browser. On a ticket, managers and developers press *Send to …*: GitHub gets an issue labelled `uat` and its severity, Jira a Bug in its own markup. Sending twice returns the issue already made.
 
 ## A person decides every step
 
@@ -68,7 +71,7 @@ cp .env.example .env.local      # add OPENAI_API_KEY (optional)
 npm run dev                     # http://localhost:4100
 ```
 
-On first run, choose **Open the chalk demo** (or start your own workspace). The demo is the chalk beta cycle: 21 notes from six testers, already read and grouped. Then follow one bug through:
+Open it and press **Try the chalk demo** (or sign up and start your own workspace). The demo is the chalk beta cycle: 21 notes from six testers, already read and grouped. Then follow one bug through:
 
 1. **Run tests** as Grace: mark steps 1–2 *It worked*, step 3 *It didn't work*, and type what happened.
 2. **Review:** add Femi's note to the case, ask Chen a question, and create the ticket.
@@ -76,6 +79,18 @@ On first run, choose **Open the chalk demo** (or start your own workspace). The 
 4. **Tickets** for the developer's view, **Connect your app** to send feedback from the live widget, then **Ideas** and **Insights**.
 
 The demo data is cached (`data/seed-cache.json`), so a reset is instant and needs no API key.
+
+## Host it
+
+Dumpling runs on Vercel, or anywhere Node runs. Set:
+
+| Variable | What it's for |
+|---|---|
+| `DATABASE_URL` (or `POSTGRES_URL`) | Postgres for everything: workspaces, accounts, sessions, connections. One `docs` table, created on first use. Without it, a hosted copy keeps data only until the server restarts. |
+| `OPENAI_API_KEY` | Reading, comparing and drafting. Optional: plain rules take over without it. |
+| `DUMPLING_SECRET` | A long random string: the key that encrypts GitHub and Jira tokens. |
+| `NEXT_PUBLIC_DUMPLING_URL` | The public address, shown in the widget and API snippets. |
+| `DUMPLING_SIGNUP=invite` | Optional: only invited people can sign up. |
 
 ## Connect your app
 
@@ -102,29 +117,35 @@ curl -X POST https://YOUR-DUMPLING/api/intake \
 
 ```
 src/lib/
-  types.ts      the whole document model: feedback, links, groups, tickets, decisions
-  ai.ts         the model calls (read, compare, draft); falls back to rules without a key
-  triage.ts     read → embed → link → group: proposals only
-  decide.ts     every human decision; one action, one target, nothing else changes state
-  sources.ts    app connections and their keys
-  store.ts      one JSON file per workspace; writes queued so decisions never overwrite each other
+  types.ts         the whole document model: feedback, links, groups, tickets, decisions
+  ai.ts            the model calls (read, compare, draft); falls back to rules without a key
+  triage.ts        read → embed → link → group: proposals only
+  decide.ts        every human decision; one action, one target, nothing else changes state
+  auth.ts          accounts, sessions, memberships, invitations
+  access.ts        who is asking, in which workspace, and may their role do this
+  docs.ts          storage: JSON files, or Postgres when DATABASE_URL is set
+  store.ts         a workspace read, changed and written in one transaction
+  sources.ts       app connections and their keys
+  integrations.ts  GitHub and Jira: test, save, send
+  secrets.ts       token encryption
 src/app/
   test/  notes/          tester views
   review/  ideas/  insights/   UAT manager views
   tickets/               developer view
   connect/  settings/  workspaces/new/    workspace
-  api/                   route handlers: state, feedback, coach, decide, draft, reply, intake,
-                         workspaces, people, scripts, sources, workspace, seed
+  signin/  signup/       accounts
+  api/                   route handlers: auth, state, feedback, coach, decide, draft, reply, intake,
+                         workspaces, members, people, scripts, sources, integrations, tickets/push, seed
 public/widget.js         the drop-in feedback widget
 ```
 
-Built with Next.js 16, React 19 and TypeScript; OpenAI for reading and drafting. Storage is one JSON file per workspace (`data/workspaces/`), which is enough for a prototype; it would be a database once hosted.
+Built with Next.js 16, React 19 and TypeScript; OpenAI for reading and drafting. Storage is a small document store (`src/lib/docs.ts`): JSON files under `data/` on one machine, or one Postgres table when `DATABASE_URL` is set. Every write runs in a transaction (row locks in Postgres), so two decisions can never overwrite each other.
 
 ## Status
 
 A working prototype built for the AI Studio Hackathon's "UAT, Untangled" challenge.
 
 Not built yet:
-- sign-in and real roles (today anyone with the URL can switch workspaces and act as tester, manager or developer);
-- pushing tickets straight into GitHub or Jira (today you copy them);
-- hosted storage.
+- invitation emails (a manager copies the sign-up link and sends it);
+- password reset;
+- hearing back from GitHub or Jira (closing an issue doesn't yet tell the testers).
